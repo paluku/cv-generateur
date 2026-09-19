@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Builder Pro - Générateur de CV IA</title>
+      <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Générateur de CV Professionnel</h1>
+        <p class="subtitle">Créez votre CV en quelques clics avec l'intelligence artificielle</p>
+
+        <form action="/generate" method="POST" enctype="multipart/form-data" id="cvForm">
+            
+            <!-- ===== CHOIX DU STYLE DE CV ===== -->
+            <div class="form-section" style="border-left-color: #7c3aed;">
+                <h2>🎨 Choisissez votre style de CV</h2>
+                <div class="style-grid">
+                    <label class="style-card selected" onclick="selectStyle(this)">
+                        <input type="radio" name="cv_style" value="modern" checked>
+                        <span class="check-mark">✓</span>
+                        <span class="style-icon">💼</span>
+                        <span class="style-name">Moderne</span>
+                        <span class="style-desc">Design épuré avec couleurs</span>
+                    </label>
+                    <label class="style-card" onclick="selectStyle(this)">
+                        <input type="radio" name="cv_style" value="classic">
+                        <span class="check-mark">✓</span>
+                        <span class="style-icon">📋</span>
+                        <span class="style-name">Classique</span>
+                        <span class="style-desc">Traditionnel et sobre</span>
+                    </label>
+                    <label class="style-card" onclick="selectStyle(this)">
+                        <input type="radio" name="cv_style" value="creative">
+                        <span class="check-mark">✓</span>
+                        <span class="style-icon">🎨</span>
+                        <span class="style-name">Créatif</span>
+                        <span class="style-desc">Original et artistique</span>
+                    </label>
+                    <label class="style-card" onclick="selectStyle(this)">
+                        <input type="radio" name="cv_style" value="minimal">
+                        <span class="check-mark">✓</span>
+                        <span class="style-icon">⬜</span>
+                        <span class="style-name">Minimal</span>
+                        <span class="style-desc">Très épuré, blanc</span>
+                    </label>
+                    <label class="style-card" onclick="selectStyle(this)">
+                        <input type="radio" name="cv_style" value="compact">
+                        <span class="check-mark">✓</span>
+                        <span class="style-icon">📐</span>
+                        <span class="style-name">Compact</span>
+                        <span class="style-desc">Gain de place</span>
+                    </label>
+                </div>
+                <p style="font-size: 12px; color: #6b7280; margin-top: 12px;">💡 Cliquez sur une carte pour sélectionner le style de votre CV</p>
+            </div>
+
+            <!-- INFORMATIONS PERSONNELLES -->
+            <div class="form-section">
+                <h2>👤 Informations Personnelles</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Civilité</label>
+                        <select name="civilite">
+                            <option value="M." {% if prefill.civilite == 'M.' %}selected{% endif %}>M.</option>
+                            <option value="Mme" {% if prefill.civilite == 'Mme' %}selected{% endif %}>Mme</option>
+                            <option value="Mlle" {% if prefill.civilite == 'Mlle' %}selected{% endif %}>Mlle</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Prénom <span class="required">*</span></label>
+                        <input type="text" name="prenom" value="{{ prefill.prenom }}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nom <span class="required">*</span></label>
+                        <input type="text" name="nom" value="{{ prefill.nom }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Métier <span class="required">*</span></label>
+                        <input type="text" name="metier" value="{{ prefill.metier }}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email <span class="required">*</span></label>
+                        <input type="email" name="email" value="{{ prefill.email }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Téléphone <span class="required">*</span></label>
+                        <input type="tel" name="telephone" value="{{ prefill.telephone }}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ville <span class="required">*</span></label>
+                        <input type="text" name="ville" value="{{ prefill.ville }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date de naissance</label>
+                        <input type="date" name="date_naissance" value="{{ prefill.date_naissance }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nationalité</label>
+                        <input type="text" name="nationalite" value="{{ prefill.nationalite }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Permis de conduire</label>
+                        <input type="text" name="permis" value="{{ prefill.permis }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPÉRIENCES -->
+            <div class="form-section">
+                <h2>💼 Expériences Professionnelles <span class="badge">Ajoutez plusieurs</span></h2>
+                <div id="experiences-container">
+                    {% for exp in prefill.experiences %}
+                    <div class="experience-item">
+                        <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Poste <span class="required">*</span></label>
+                                <input type="text" name="exp_{{ loop.index0 }}_poste" value="{{ exp.poste }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Entreprise <span class="required">*</span></label>
+                                <input type="text" name="exp_{{ loop.index0 }}_entreprise" value="{{ exp.entreprise }}" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Ville</label>
+                                <input type="text" name="exp_{{ loop.index0 }}_ville" value="{{ exp.ville }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Date de début <span class="required">*</span></label>
+                                <input type="date" name="exp_{{ loop.index0 }}_date_debut" value="{{ exp.date_debut }}" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Date de fin</label>
+                                <input type="date" name="exp_{{ loop.index0 }}_date_fin" value="{{ exp.date_fin if exp.date_fin != 'Présent' else '' }}">
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" name="exp_{{ loop.index0 }}_current" {% if exp.date_fin == 'Présent' %}checked{% endif %}>
+                                <label>Poste actuel</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="exp_{{ loop.index0 }}_description" rows="4">{{ exp.description }}</textarea>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn-add" onclick="addExperience()">+ Ajouter une expérience</button>
+            </div>
+
+            <!-- FORMATIONS -->
+            <div class="form-section">
+                <h2>🎓 Formations <span class="badge">Ajoutez plusieurs</span></h2>
+                <div id="formations-container">
+                    {% for form in prefill.formations %}
+                    <div class="formation-item">
+                        <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Diplôme <span class="required">*</span></label>
+                                <input type="text" name="formation_{{ loop.index0 }}_diplome" value="{{ form.diplome }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>École <span class="required">*</span></label>
+                                <input type="text" name="formation_{{ loop.index0 }}_ecole" value="{{ form.ecole }}" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Ville</label>
+                                <input type="text" name="formation_{{ loop.index0 }}_ville" value="{{ form.ville }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Date de début <span class="required">*</span></label>
+                                <input type="date" name="formation_{{ loop.index0 }}_date_debut" value="{{ form.date_debut }}" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Date de fin <span class="required">*</span></label>
+                                <input type="date" name="formation_{{ loop.index0 }}_date_fin" value="{{ form.date_fin }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Mention</label>
+                                <input type="text" name="formation_{{ loop.index0 }}_mention" value="{{ form.mention }}">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn-add" onclick="addFormation()">+ Ajouter une formation</button>
+            </div>
+
+            <!-- COMPÉTENCES -->
+            <div class="form-section">
+                <h2>⚡ Compétences</h2>
+                <div class="form-group">
+                    <label>Compétences techniques</label>
+                    <textarea name="competences_techniques" rows="3">{{ prefill.competences.techniques }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Méthodologies</label>
+                    <textarea name="competences_methodologies" rows="2">{{ prefill.competences.methodologies }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Autres compétences</label>
+                    <textarea name="competences_autres" rows="2">{{ prefill.competences.autres }}</textarea>
+                </div>
+            </div>
+
+            <!-- LANGUES -->
+            <div class="form-section">
+                <h2>🌍 Langues</h2>
+                <div id="langues-container">
+                    {% for langue in prefill.langues %}
+                    <div class="langue-item">
+                        <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Langue</label>
+                                <input type="text" name="langue_{{ loop.index0 }}_nom" value="{{ langue.langue }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Niveau</label>
+                                <input type="text" name="langue_{{ loop.index0 }}_niveau" value="{{ langue.niveau }}">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn-add" onclick="addLangue()">+ Ajouter une langue</button>
+            </div>
+
+            <!-- ATOUTS ET LOISIRS -->
+            <div class="form-section">
+                <h2>⭐ Qualités et Centres d'intérêt</h2>
+                <div class="form-group">
+                    <label>Atouts personnels (un par ligne)</label>
+                    <textarea name="atouts" rows="4">{{ prefill.atouts }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Loisirs (un par ligne)</label>
+                    <textarea name="loisirs" rows="4">{{ prefill.loisirs }}</textarea>
+                </div>
+            </div>
+
+            <!-- PHOTO -->
+            <div class="form-section">
+                <h2>📸 Photo</h2>
+                <div class="file-upload">
+                    <label class="file-upload-label">
+                        <input type="file" name="photo" accept="image/*">
+                        <div>📤 Cliquez pour télécharger votre photo</div>
+                        <small style="color: #9ca3af;">PNG, JPG, JPEG - Max 5MB</small>
+                    </label>
+                </div>
+            </div>
+
+            <!-- BOUTON DE SOUMISSION -->
+            <button type="submit" class="btn-submit">🚀 Générer mon CV</button>
+        </form>
+    </div>
+
+    <script>
+        let expCounter = {{ prefill.experiences|length }};
+        let formCounter = {{ prefill.formations|length }};
+        let langCounter = {{ prefill.langues|length }};
+
+        function selectStyle(card) {
+            document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            card.querySelector('input[type="radio"]').checked = true;
+        }
+
+        function addExperience() {
+            const container = document.getElementById('experiences-container');
+            const template = `
+                <div class="experience-item">
+                    <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Poste <span class="required">*</span></label>
+                            <input type="text" name="exp_${expCounter}_poste" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Entreprise <span class="required">*</span></label>
+                            <input type="text" name="exp_${expCounter}_entreprise" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <input type="text" name="exp_${expCounter}_ville">
+                        </div>
+                        <div class="form-group">
+                            <label>Date de début <span class="required">*</span></label>
+                            <input type="date" name="exp_${expCounter}_date_debut" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date de fin</label>
+                            <input type="date" name="exp_${expCounter}_date_fin">
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" name="exp_${expCounter}_current">
+                            <label>Poste actuel</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="exp_${expCounter}_description" rows="4"></textarea>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', template);
+            expCounter++;
+        }
+
+        function addFormation() {
+            const container = document.getElementById('formations-container');
+            const template = `
+                <div class="formation-item">
+                    <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Diplôme <span class="required">*</span></label>
+                            <input type="text" name="formation_${formCounter}_diplome" required>
+                        </div>
+                        <div class="form-group">
+                            <label>École <span class="required">*</span></label>
+                            <input type="text" name="formation_${formCounter}_ecole" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <input type="text" name="formation_${formCounter}_ville">
+                        </div>
+                        <div class="form-group">
+                            <label>Date de début <span class="required">*</span></label>
+                            <input type="date" name="formation_${formCounter}_date_debut" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date de fin <span class="required">*</span></label>
+                            <input type="date" name="formation_${formCounter}_date_fin" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Mention</label>
+                            <input type="text" name="formation_${formCounter}_mention">
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', template);
+            formCounter++;
+        }
+
+        function addLangue() {
+            const container = document.getElementById('langues-container');
+            const template = `
+                <div class="langue-item">
+                    <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Langue</label>
+                            <input type="text" name="langue_${langCounter}_nom">
+                        </div>
+                        <div class="form-group">
+                            <label>Niveau</label>
+                            <input type="text" name="langue_${langCounter}_niveau">
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', template);
+            langCounter++;
+        }
+
+        function removeItem(button) {
+            if (confirm('Supprimer cet élément ?')) {
+                button.closest('.experience-item, .formation-item, .langue-item').remove();
+            }
+        }
+    </script>
+		 <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
