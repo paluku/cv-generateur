@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Palatino','Book Antiqua', serif; font-size:12.5px; color:#222; background:#fff; padding:25mm; line-height:1.7; }
+  .head { text-align:center; padding-bottom:18px; border-bottom:1px double {{ data.couleur }}; margin-bottom:28px; }
+  .head h1 { font-size:22px; letter-spacing:3px; font-weight:400; color:{{ data.couleur }}; }
+  .head .contact { margin-top:8px; font-size:11px; color:#666; letter-spacing:1px; }
+  .head .contact span { margin:0 10px; }
+  .destinataire { font-size:12px; margin-bottom:24px; }
+  .destinataire b { color:{{ data.couleur }}; letter-spacing:1px; }
+  .lieu-date { text-align:right; font-style:italic; font-size:12px; color:#555; margin-bottom:20px; }
+  .objet { font-variant:small-caps; letter-spacing:2px; margin-bottom:24px; padding:8px 0; border-top:1px solid #ddd; border-bottom:1px solid #ddd; text-align:center; color:{{ data.couleur }}; }
+  p { text-align:justify; margin-bottom:14px; }
+  .appel { font-style:italic; }
+  .politesse { margin-top:22px; margin-bottom:40px; }
+  .signature { text-align:right; font-style:italic; }
+  .signature b { display:block; color:{{ data.couleur }}; letter-spacing:2px; font-size:13px; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>{{ data.prenom }} {{ data.nom }}</h1>
+  <div class="contact">
+    {% if data.adresse %}<span>{{ data.adresse }}, {{ data.code_postal }} {{ data.ville }}</span>{% endif %}
+    {% if data.telephone %}<span>{{ data.telephone }}</span>{% endif %}
+    {% if data.email %}<span>{{ data.email }}</span>{% endif %}
+  </div>
+</div>
+
+<div class="destinataire">
+  <b>{{ data.entreprise }}</b><br>
+  {{ data.entreprise_adresse }}<br>
+  {{ data.entreprise_cp }} {{ data.entreprise_ville }}
+  {% if data.destinataire %}<br><em>{{ data.destinataire }}</em>{% endif %}
+</div>
+
+<div class="lieu-date">{{ data.lieu_lettre }}, le {{ data.date_lettre|format_date_full }}</div>
+
+<div class="objet">Objet : candidature au poste de {{ data.poste }}</div>
+
+<p class="appel">{{ data.appel }}</p>
+{% if data.para1 %}<p>{{ data.para1 }}</p>{% endif %}
+{% if data.para2 %}<p>{{ data.para2 }}</p>{% endif %}
+{% if data.para3 %}<p>{{ data.para3 }}</p>{% endif %}
+{% if data.para4 %}<p>{{ data.para4 }}</p>{% endif %}
+
+<p class="politesse">{{ data.politesse }}</p>
+
+<div class="signature">
+  <b>{{ data.signature or (data.prenom ~ ' ' ~ data.nom) }}</b>
+</div>
+</body>
+</html>

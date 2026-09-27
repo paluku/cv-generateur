@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {  font-family: {{ data.police|default("'Georgia', serif")|safe }}; font-size:13px; color:#333; background:#fff; padding:22mm; line-height:1.7; }
+  header { margin-bottom:35px; }
+  header h1 { font-size:36px; font-weight:300; letter-spacing:-1px; }
+  header .titre { font-size:15px; color:{{ data.couleur }}; letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
+  header .contact { font-size:11px; color:#95a5a6; margin-top:12px; letter-spacing:.5px; }
+  header .contact span { margin-right:16px; }
+  .grille { display:grid; grid-template-columns:1fr 2fr; gap:30px; }
+  .colonne-g h2 { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:{{ data.couleur }}; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid #ecf0f1; }
+  .colonne-g section { margin-bottom:28px; }
+  .colonne-g p, .colonne-g div { font-size:12px; color:#555; margin-bottom:6px; }
+  .colonne-d section { margin-bottom:28px; page-break-inside:avoid; }
+  .colonne-d h2 { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:{{ data.couleur }}; margin-bottom:14px; padding-bottom:6px; border-bottom:1px solid #ecf0f1; }
+  .item { margin-bottom:16px; page-break-inside:avoid; }
+  .item .titre-item { font-weight:600; font-size:14px; }
+  .item .date { font-size:11px; color:#95a5a6; }
+  .item .sous-titre { font-size:12px; color:#7f8c8d; margin:2px 0 4px; }
+  .item .desc { font-size:12px; color:#555; }
+  .competences span { display:inline-block; font-size:11px; background:#f4f6f9; padding:3px 10px; border-radius:4px; margin:2px 3px 2px 0; color:#555; }
+  .langues div { font-size:12px; margin-bottom:6px; }
+  .langues b { color:{{ data.couleur }}; }
+  .photo { width:110px; height:110px; object-fit:cover; border-radius:4px; margin-bottom:20px; }
+</style>
+</head>
+<body>
+<header>
+  {% if data.photo %}<img src="{{ data.photo }}" class="photo">{% endif %}
+  <h1>{{ data.prenom }} {{ data.nom }}</h1>
+  <div class="titre">{{ data.titre }}</div>
+  <div class="contact">
+    {% if data.email %}<span>{{ data.email }}</span>{% endif %}
+    {% if data.telephone %}<span>{{ data.telephone }}</span>{% endif %}
+    {% if data.ville %}<span>{{ data.code_postal }} {{ data.ville }}</span>{% endif %}
+    {% if data.linkedin %}<span>{{ data.linkedin }}</span>{% endif %}
+  </div>
+</header>
+
+<div class="grille">
+  <aside class="colonne-g">
+    {% if data.competences %}
+    <section><h2>Compétences</h2><div class="competences">{% for c in data.competences %}<span>{{ c }}</span>{% endfor %}</div></section>
+    {% endif %}
+    {% if data.langues %}
+    <section><h2>Langues</h2><div class="langues">{% for l in data.langues %}<div><b>{{ l.langue }}</b><br>{{ l.niveau }}</div>{% endfor %}</div></section>
+    {% endif %}
+    {% if data.certifications %}
+    <section><h2>Certifications</h2>{% for c in data.certifications %}<div>{{ c }}</div>{% endfor %}</section>
+    {% endif %}
+    {% if data.interets %}
+    <section><h2>Intérêts</h2>{% for i in data.interets %}<div>{{ i }}</div>{% endfor %}</section>
+    {% endif %}
+  </aside>
+
+  <div class="colonne-d">
+    {% if data.profil %}
+    <section><h2>Profil</h2><p>{{ data.profil }}</p></section>
+    {% endif %}
+    {% if data.experiences %}
+    <section><h2>Expériences</h2>
+      {% for exp in data.experiences %}<div class="item">
+        <div class="titre-item">{{ exp.poste }}</div>
+        <div class="date">{{ exp.debut }} — {{ exp.fin }}</div>
+        <div class="sous-titre">{{ exp.entreprise }}{% if exp.lieu %} · {{ exp.lieu }}{% endif %}</div>
+        {% if exp.description %}<div class="desc">{{ exp.description }}</div>{% endif %}
+      </div>{% endfor %}
+    </section>{% endif %}
+    {% if data.formations %}
+    <section><h2>Formations</h2>
+      {% for form in data.formations %}<div class="item">
+        <div class="titre-item">{{ form.diplome }}</div>
+        <div class="date">{{ form.debut }} — {{ form.fin }}</div>
+        <div class="sous-titre">{{ form.etablissement }}</div>
+        {% if form.description %}<div class="desc">{{ form.description }}</div>{% endif %}
+      </div>{% endfor %}
+    </section>{% endif %}
+  </div>
+</div>
+</body>
+</html>

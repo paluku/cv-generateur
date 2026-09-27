@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Helvetica Neue', Arial, sans-serif; font-size:12.5px; color:#333; background:#fff; padding:25mm; line-height:1.75; }
+  .head { margin-bottom:40px; }
+  .head h1 { font-size:22px; font-weight:300; letter-spacing:-.5px; color:#222; }
+  .head .coords { font-size:11px; color:#888; margin-top:6px; }
+  .head .coords span { margin-right:14px; }
+  .dest { font-size:12px; margin-bottom:34px; color:#555; }
+  .dest b { color:#222; }
+  .date { text-align:right; font-size:12px; color:#888; margin-bottom:24px; }
+  .objet { font-size:12px; text-transform:uppercase; letter-spacing:2px; color:#222; margin-bottom:28px; padding-bottom:8px; border-bottom:1px solid #eee; }
+  p { text-align:justify; margin-bottom:14px; }
+  .appel { color:#222; }
+  .politesse { margin-top:22px; margin-bottom:44px; }
+  .signature { font-size:12px; }
+  .signature b { display:block; color:#222; font-weight:600; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>{{ data.prenom }} {{ data.nom }}</h1>
+  <div class="coords">
+    {% if data.adresse %}<span>{{ data.adresse }}</span>{% endif %}
+    {% if data.code_postal or data.ville %}<span>{{ data.code_postal }} {{ data.ville }}</span>{% endif %}
+    {% if data.telephone %}<span>{{ data.telephone }}</span>{% endif %}
+    {% if data.email %}<span>{{ data.email }}</span>{% endif %}
+  </div>
+</div>
+
+<div class="dest">
+  <b>{{ data.entreprise }}</b><br>
+  {{ data.entreprise_adresse }}<br>
+  {{ data.entreprise_cp }} {{ data.entreprise_ville }}
+</div>
+
+<div class="date">{{ data.lieu_lettre }}, le {{ data.date_lettre|format_date_full }}</div>
+
+<div class="objet">Objet : candidature — {{ data.poste }}</div>
+
+<p class="appel">{{ data.appel }}</p>
+{% if data.para1 %}<p>{{ data.para1 }}</p>{% endif %}
+{% if data.para2 %}<p>{{ data.para2 }}</p>{% endif %}
+{% if data.para3 %}<p>{{ data.para3 }}</p>{% endif %}
+{% if data.para4 %}<p>{{ data.para4 }}</p>{% endif %}
+
+<p class="politesse">{{ data.politesse }}</p>
+
+<div class="signature">
+  <b>{{ data.signature or (data.prenom ~ ' ' ~ data.nom) }}</b>
+</div>
+</body>
+</html>

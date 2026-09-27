@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Trebuchet MS', sans-serif; font-size:12.5px; color:#2c3e50; background:#fff; padding:18mm; line-height:1.6; }
+  .top { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:14px; border-bottom:4px solid {{ data.couleur }}; margin-bottom:22px; }
+  .top h1 { font-size:26px; color:{{ data.couleur }}; }
+  .top .sub { font-size:12px; color:#7f8c8d; margin-top:4px; }
+  .top .coords { text-align:right; font-size:11px; color:#555; }
+  .bloc-dest { background:linear-gradient(135deg, {{ data.couleur }}22, {{ data.couleur }}11); padding:14px 18px; border-radius:10px; margin-bottom:22px; font-size:12px; }
+  .bloc-dest b { color:{{ data.couleur }}; }
+  .date { text-align:right; font-size:12px; color:#7f8c8d; margin-bottom:14px; }
+  .objet { font-weight:700; color:{{ data.couleur }}; margin-bottom:18px; font-size:13px; }
+  p { text-align:justify; margin-bottom:12px; }
+  .appel { font-weight:600; }
+  .politesse { margin-top:20px; margin-bottom:30px; }
+  .signature { text-align:right; font-size:13px; }
+  .signature b { display:block; color:{{ data.couleur }}; font-size:15px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>{{ data.prenom }} {{ data.nom }}</h1>
+    <div class="sub">Candidature spontanée — {{ data.poste }}</div>
+  </div>
+  <div class="coords">
+    {{ data.adresse }}<br>
+    {{ data.code_postal }} {{ data.ville }}<br>
+    {{ data.telephone }}<br>
+    {{ data.email }}
+  </div>
+</div>
+
+<div class="bloc-dest">
+  <b>{{ data.entreprise }}</b><br>
+  {{ data.entreprise_adresse }}<br>
+  {{ data.entreprise_cp }} {{ data.entreprise_ville }}
+  {% if data.destinataire %}<br><em>À l'attention de {{ data.destinataire }}</em>{% endif %}
+</div>
+
+<div class="date">{{ data.lieu_lettre }}, le {{ data.date_lettre|format_date_full }}</div>
+
+<div class="objet">✦ Objet : Candidature au poste de {{ data.poste }}{% if data.reference %} — {{ data.reference }}{% endif %}</div>
+
+<p class="appel">{{ data.appel }}</p>
+{% if data.para1 %}<p>{{ data.para1 }}</p>{% endif %}
+{% if data.para2 %}<p>{{ data.para2 }}</p>{% endif %}
+{% if data.para3 %}<p>{{ data.para3 }}</p>{% endif %}
+{% if data.para4 %}<p>{{ data.para4 }}</p>{% endif %}
+
+<p class="politesse">{{ data.politesse }}</p>
+
+<div class="signature">
+  <b>{{ data.signature or (data.prenom ~ ' ' ~ data.nom) }}</b>
+</div>
+</body>
+</html>

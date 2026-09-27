@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mon compte — CVPro</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo">CV<span>Pro</span></a>
+    <nav class="menu">
+      <a href="/">Accueil</a>
+	    <a href="/mes-cv" class="btn-or" style="padding:12px 24px; border-radius:10px; text-decoration:none; margin-right:10px;">
+        📂 Mes CV sauvegardés
+     </a>
+      <a href="/logout">Déconnexion</a>
+	  
+    </nav>
+  </div>
+</header>
+
+<main class="contenu" style="padding: 60px 0;">
+  <div class="form-auth" style="max-width: 600px;">
+    <h1>👤 Mon compte</h1>
+
+    {% if user.premium %}
+      <div class="statut-premium premium-actif">
+        <div class="statut-ico">👑</div>
+        <div>
+          <h3>Compte Premium ✅</h3>
+          <p>Actif depuis le {{ user.premium_date.strftime('%d/%m/%Y') if user.premium_date else '-' }}</p>
+        </div>
+      </div>
+    {% else %}
+      <div class="statut-premium premium-gratuit">
+        <div class="statut-ico">🎁</div>
+        <div>
+          <h3>Compte Gratuit</h3>
+          <p>Passez à Premium pour débloquer tous les modèles</p>
+          <a href="/#premium" class="btn-or" style="margin-top: 10px; display: inline-block;">
+            💎 Débloquer Premium
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="infos-compte">
+      <h3>Informations</h3>
+      <div class="info-ligne"><b>Nom :</b> {{ user.nom }}</div>
+      <div class="info-ligne"><b>Email :</b> {{ user.email }}</div>
+      {% if user.telephone %}
+        <div class="info-ligne"><b>Téléphone :</b> {{ user.telephone }}</div>
+      {% endif %}
+      <div class="info-ligne"><b>Inscrit le :</b> {{ user.created_at.strftime('%d/%m/%Y') }}</div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="/" class="btn-or">← Créer un CV</a>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

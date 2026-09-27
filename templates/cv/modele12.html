@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #1e1e2e; line-height: 1.6; background: #fff; }
+  .hero { background: linear-gradient(135deg, {{ data.couleur }}, #1e1e2e); color: #fff; padding: 40px 18mm 50px; position: relative; overflow: hidden; }
+  .hero::before { content:''; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,.05); }
+  .hero::after { content:''; position: absolute; bottom: -80px; left: -80px; width: 250px; height: 250px; border-radius: 50%; background: rgba(255,255,255,.03); }
+  .hero-inner { display: flex; align-items: center; gap: 30px; position: relative; z-index: 2; }
+  .hero .photo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,.3); }
+  .hero h1 { font-size: 32px; font-weight: 200; letter-spacing: 1px; margin-bottom: 6px; }
+  .hero .titre { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.85); }
+  .contact-strip { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 20px; font-size: 11px; color: rgba(255,255,255,.8); position: relative; z-index: 2; }
+  .contact-strip span { display: flex; align-items: center; gap: 6px; }
+  .content { padding: 30px 18mm; }
+  h2 { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: {{ data.couleur }}; margin: 26px 0 14px; display: flex; align-items: center; gap: 14px; page-break-after: avoid; }
+  h2::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, {{ data.couleur }}66, transparent); }
+  .profil { font-size: 12.5px; color: #444; text-align: justify; }
+  .item { display: grid; grid-template-columns: 100px 1fr; gap: 20px; margin-bottom: 18px; page-break-inside: avoid; }
+  .item .date-col { font-size: 11px; color: #888; text-align: right; padding-top: 3px; }
+  .item .date-col b { display: block; color: {{ data.couleur }}; font-weight: 600; }
+  .item .contenu .titre-item { font-weight: 700; font-size: 13.5px; color: #1e1e2e; margin-bottom: 3px; }
+  .item .contenu .sous-titre { font-size: 11.5px; color: #666; font-style: italic; margin-bottom: 6px; }
+  .item .contenu .desc { font-size: 12px; color: #444; }
+  .competences { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  .competences .comp { font-size: 12px; padding: 6px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+  .competences .comp::after { content: '●'; color: {{ data.couleur }}; font-size: 8px; }
+  .langues { display: flex; flex-wrap: wrap; gap: 12px; }
+  .langues .lang { background: #f4f4f8; padding: 8px 16px; border-radius: 20px; font-size: 11.5px; }
+  .langues .lang b { color: {{ data.couleur }}; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    {% if data.photo %}<img src="{{ data.photo }}" class="photo" alt="Photo">{% endif %}
+    <div>
+      <h1>{{ data.prenom }} {{ data.nom }}</h1>
+      <div class="titre">{{ data.titre }}</div>
+    </div>
+  </div>
+  <div class="contact-strip">
+    {% if data.email %}<span>✉ {{ data.email }}</span>{% endif %}
+    {% if data.telephone %}<span>☎ {{ data.telephone }}</span>{% endif %}
+    {% if data.ville %}<span>⌂ {{ data.code_postal }} {{ data.ville }}</span>{% endif %}
+    {% if data.linkedin %}<span>in {{ data.linkedin }}</span>{% endif %}
+  </div>
+</div>
+
+<div class="content">
+
+  {% if data.profil %}
+  <h2>À propos</h2>
+  <p class="profil">{{ data.profil }}</p>
+  {% endif %}
+
+  {% if data.experiences %}
+  <h2>Expériences</h2>
+  {% for exp in data.experiences %}
+  <div class="item">
+    <div class="date-col">
+      <b>{{ exp.debut|format_date }}</b>
+      {{ exp.fin|format_date }}
+    </div>
+    <div class="contenu">
+      <div class="titre-item">{{ exp.poste }}</div>
+      <div class="sous-titre">{{ exp.entreprise }}{% if exp.lieu %} · {{ exp.lieu }}{% endif %}</div>
+      {% if exp.description %}<div class="desc">{{ exp.description }}</div>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if data.formations %}
+  <h2>Formations</h2>
+  {% for form in data.formations %}
+  <div class="item">
+    <div class="date-col">
+      <b>{{ form.debut|format_date }}</b>
+      {{ form.fin|format_date }}
+    </div>
+    <div class="contenu">
+      <div class="titre-item">{{ form.diplome }}</div>
+      <div class="sous-titre">{{ form.etablissement }}{% if form.lieu %} · {{ form.lieu }}{% endif %}</div>
+      {% if form.description %}<div class="desc">{{ form.description }}</div>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if data.competences %}
+  <h2>Compétences</h2>
+  <div class="competences">
+    {% for c in data.competences %}<div class="comp">{{ c }}</div>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if data.langues %}
+  <h2>Langues</h2>
+  <div class="langues">
+    {% for l in data.langues %}<div class="lang"><b>{{ l.langue }}</b> · {{ l.niveau }}</div>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if data.certifications %}
+  <h2>Certifications</h2>
+  <ul style="margin-left: 22px; font-size: 12px; color: #444;">
+    {% for c in data.certifications %}<li>{{ c }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if data.interets %}
+  <h2>Intérêts</h2>
+  <p style="font-size: 12px; color: #555;">{{ data.interets|join(' · ') }}</p>
+  {% endif %}
+
+</div>
+
+</body>
+</html>

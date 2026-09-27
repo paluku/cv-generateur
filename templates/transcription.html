@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Transcripteur Audio & Vidéo</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f8;
+            color: #202124;
+        }
+
+        .container {
+            width: min(900px, 92%);
+            margin: 50px auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 35px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 35px;
+        }
+
+        .dropzone {
+            border: 2px dashed #aaa;
+            border-radius: 15px;
+            padding: 45px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .dropzone:hover {
+            border-color: #333;
+            background: #fafafa;
+        }
+
+        .dropzone input {
+            display: none;
+        }
+
+        .file-name {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        select,
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        select {
+            border: 1px solid #ccc;
+            background: white;
+        }
+
+        button {
+            border: 0;
+            background: #111;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            display: none;
+            margin-top: 25px;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #e5e5e5;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-inner {
+            height: 100%;
+            width: 30%;
+            background: #111;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(350%);
+            }
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 12px;
+            color: #666;
+        }
+
+        .result {
+            display: none;
+            margin-top: 35px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 350px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+
+        .downloads {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .downloads a {
+            flex: 1;
+            text-align: center;
+            padding: 14px;
+            border-radius: 10px;
+            background: #111;
+            color: white;
+            text-decoration: none;
+        }
+
+        .downloads a:hover {
+            background: #333;
+        }
+
+        .error {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #ffe8e8;
+            color: #a00000;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 22px;
+            }
+
+            .downloads {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>🎙️ Transcripteur Audio & Vidéo</h1>
+
+        <div class="subtitle">
+            Transformez automatiquement vos fichiers audio ou vidéo
+            en texte et PDF.
+        </div>
+
+        <form id="form">
+
+            <label class="dropzone" for="file">
+                <strong>📁 Cliquez ici pour choisir un fichier</strong>
+
+                <br><br>
+
+                Audio :
+                MP3, WAV, M4A, AAC, OGG, FLAC
+
+                <br>
+
+                Vidéo :
+                MP4, MKV, AVI, MOV, WEBM
+
+                <input
+                    type="file"
+                    id="file"
+                    name="file"
+                    accept="audio/*,video/*"
+                    required
+                >
+
+                <div class="file-name" id="fileName">
+                    Aucun fichier sélectionné
+                </div>
+            </label>
+
+            <select name="language" id="language">
+                <option value="">Détection automatique de la langue</option>
+                <option value="fr">Français</option>
+                <option value="en">Anglais</option>
+                <option value="es">Espagnol</option>
+                <option value="de">Allemand</option>
+                <option value="it">Italien</option>
+                <option value="pt">Portugais</option>
+                <option value="ar">Arabe</option>
+                <option value="nl">Néerlandais</option>
+                <option value="ja">Japonais</option>
+                <option value="zh">Chinois</option>
+            </select>
+
+            <button type="submit" id="submitButton">
+                🚀 Transcrire le fichier
+            </button>
+
+        </form>
+
+        <div class="progress" id="progress">
+
+            <div class="progress-bar">
+                <div class="progress-inner"></div>
+            </div>
+
+            <div class="status">
+                ⏳ Transcription en cours...
+                Cela peut prendre plusieurs minutes.
+            </div>
+
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+
+            <h2>📝 Transcription</h2>
+
+            <textarea id="transcription" readonly></textarea>
+
+            <div class="downloads">
+
+                <a id="txtLink" href="#">
+                    📄 Télécharger TXT
+                </a>
+
+                <a id="pdfLink" href="#">
+                    📕 Télécharger PDF
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const form = document.getElementById("form");
+const fileInput = document.getElementById("file");
+const fileName = document.getElementById("fileName");
+
+const progress = document.getElementById("progress");
+const result = document.getElementById("result");
+const errorBox = document.getElementById("error");
+
+const transcription = document.getElementById("transcription");
+
+const txtLink = document.getElementById("txtLink");
+const pdfLink = document.getElementById("pdfLink");
+
+const submitButton = document.getElementById("submitButton");
+
+
+fileInput.addEventListener("change", () => {
+
+    if (fileInput.files.length > 0) {
+        fileName.textContent = fileInput.files[0].name;
+    } else {
+        fileName.textContent = "Aucun fichier sélectionné";
+    }
+
+});
+
+
+form.addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    errorBox.style.display = "none";
+    result.style.display = "none";
+
+    if (!fileInput.files.length) {
+        showError("Veuillez sélectionner un fichier.");
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    submitButton.disabled = true;
+    submitButton.textContent = "⏳ Traitement...";
+
+    progress.style.display = "block";
+
+    try {
+
+        const response = await fetch("/transcribe", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.error || "Une erreur est survenue."
+            );
+        }
+
+        transcription.value = data.text;
+
+        txtLink.href = data.txt_url;
+        pdfLink.href = data.pdf_url;
+
+        result.style.display = "block";
+
+    } catch (error) {
+
+        showError(error.message);
+
+    } finally {
+
+        submitButton.disabled = false;
+        submitButton.textContent = "🚀 Transcrire le fichier";
+
+        progress.style.display = "none";
+    }
+
+});
+
+
+function showError(message) {
+
+    errorBox.textContent = "❌ " + message;
+    errorBox.style.display = "block";
+
+}
+
+</script>
+
+</body>
+</html>

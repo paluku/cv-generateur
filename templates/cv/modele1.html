@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:{{ data.police|default("'Segoe UI', Arial, sans-serif")|safe }}; color:#2c3e50; line-height:1.5; background:#fff; padding:15mm; }
+  .header { border-bottom:3px solid {{ data.couleur }}; padding-bottom:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; page-break-inside:avoid; }
+  .header h1 { font-size:26px; color:{{ data.couleur }}; margin-bottom:4px; }
+  .header .titre { font-size:15px; color:#7f8c8d; font-style:italic; }
+  .photo { width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid {{ data.couleur }}; }
+  .contact { text-align:right; font-size:11px; color:#7f8c8d; line-height:1.6; }
+  h2 { font-size:14px; color:{{ data.couleur }}; border-bottom:1px solid #ecf0f1; padding-bottom:4px; margin:18px 0 10px; text-transform:uppercase; letter-spacing:1px; page-break-after:avoid; }
+  .item { margin-bottom:12px; page-break-inside:avoid; }
+  .item .titre-item { font-weight:bold; font-size:13px; }
+  .item .sous-titre { font-size:11px; color:#7f8c8d; font-style:italic; }
+  .item .desc { font-size:12px; margin-top:3px; }
+  .competences { display:flex; flex-wrap:wrap; gap:6px; }
+  .competences span { background:#f4f6f9; padding:3px 10px; border-radius:12px; font-size:11px; }
+  .langues { display:flex; flex-wrap:wrap; gap:15px; }
+  .langues div { font-size:12px; }
+  .langues b { color:{{ data.couleur }}; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>{{ data.prenom }} {{ data.nom }}</h1>
+    <div class="titre">{{ data.titre }}</div>
+  </div>
+  <div class="contact">
+    {% if data.email %}{{ data.email }}<br>{% endif %}
+    {% if data.telephone %}{{ data.telephone }}<br>{% endif %}
+    {% if data.adresse %}{{ data.adresse }}<br>{% endif %}
+    {% if data.code_postal or data.ville %}{{ data.code_postal }} {{ data.ville }}<br>{% endif %}
+    {% if data.pays %}{{ data.pays }}{% endif %}
+    {% if data.date_naissance %}<br>Né(e) le {{ data.date_naissance|format_date_full }}{% endif %}
+  </div>
+</div>
+
+{% if data.photo %}<div style="text-align:center;margin-bottom:15px;"><img src="{{ data.photo }}" class="photo"></div>{% endif %}
+
+{% if data.profil %}<h2>Profil</h2><p class="desc">{{ data.profil }}</p>{% endif %}
+
+{% if data.experiences %}
+<h2>Expériences professionnelles</h2>
+{% for exp in data.experiences %}<div class="item">
+  <div class="titre-item">{{ exp.poste }}</div>
+  <div class="sous-titre">
+    {{ exp.entreprise }}{% if exp.lieu %} — {{ exp.lieu }}{% endif %}
+   
+  </div>
+  {% if exp.description %}<div class="desc">{{ exp.description }}</div>{% endif %}
+</div>{% endfor %}{% endif %}
+
+{% if data.formations %}
+<h2>Formations</h2>
+{% for form in data.formations %}<div class="item">
+  <div class="titre-item">{{ form.diplome }}</div>
+  <div class="sous-titre">
+    {{ form.etablissement }}{% if form.lieu %} — {{ form.lieu }}{% endif %}
+   
+  </div>
+  {% if form.description %}<div class="desc">{{ form.description }}</div>{% endif %}
+</div>{% endfor %}{% endif %}
+
+{% if data.competences %}<h2>Compétences</h2>
+<div class="competences">{% for c in data.competences %}<span>{{ c }}</span>{% endfor %}</div>{% endif %}
+
+{% if data.langues %}<h2>Langues</h2>
+<div class="langues">{% for l in data.langues %}<div><b>{{ l.langue }}</b> — {{ l.niveau }}</div>{% endfor %}</div>{% endif %}
+
+{% if data.certifications %}<h2>Certifications</h2>
+<ul style="margin-left:18px;font-size:12px;">{% for c in data.certifications %}<li>{{ c }}</li>{% endfor %}</ul>{% endif %}
+
+{% if data.interets %}<h2>Centres d'intérêt</h2><p class="desc">{{ data.interets|join(', ') }}</p>{% endif %}
+</body>
+</html>

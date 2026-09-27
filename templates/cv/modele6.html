@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {  font-family: {{ data.police|default("'Georgia', serif")|safe }};font-size:13px; color:#2c3e50; background:#fff; line-height:1.55; }
+  .top { background:{{ data.couleur }}; color:#fff; padding:24px 20mm; display:flex; justify-content:space-between; align-items:center; }
+  .top h1 { font-size:28px; }
+  .top .titre { font-size:14px; opacity:.9; margin-top:2px; }
+  .top .photo { width:90px; height:90px; border-radius:8px; object-fit:cover; border:3px solid #fff; }
+  .content { padding:20px 20mm; }
+  .contact-strip { background:#ecf0f1; padding:10px 20mm; font-size:11px; display:flex; flex-wrap:wrap; gap:20px; }
+  .contact-strip b { color:{{ data.couleur }}; }
+  .grille { display:grid; grid-template-columns:2fr 1fr; gap:26px; margin-top:20px; }
+  h2 { font-size:14px; color:{{ data.couleur }}; text-transform:uppercase; letter-spacing:1px; padding-bottom:6px; border-bottom:2px solid {{ data.couleur }}; margin:18px 0 12px; page-break-after:avoid; }
+  .col-g section:first-child h2 { margin-top:0; }
+  .item { margin-bottom:14px; page-break-inside:avoid; }
+  .item .titre-item { font-weight:bold; font-size:13px; }
+  .item .sous-titre { font-size:11px; color:#7f8c8d; }
+  .item .desc { font-size:12px; margin-top:3px; }
+  .col-d section { background:#f9fbfc; padding:14px; border-radius:8px; margin-bottom:16px; page-break-inside:avoid; }
+  .col-d h2 { margin-top:0; }
+  .col-d .competences span { display:block; font-size:12px; padding:4px 0; border-bottom:1px dotted #d5dbdb; }
+  .langues div { font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; }
+  .langues b { color:{{ data.couleur }}; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>{{ data.prenom }} {{ data.nom }}</h1>
+    <div class="titre">{{ data.titre }}</div>
+  </div>
+  {% if data.photo %}<img src="{{ data.photo }}" class="photo">{% endif %}
+</div>
+
+<div class="contact-strip">
+  {% if data.email %}<span><b>Email :</b> {{ data.email }}</span>{% endif %}
+  {% if data.telephone %}<span><b>Tél :</b> {{ data.telephone }}</span>{% endif %}
+  {% if data.ville %}<span><b>Ville :</b> {{ data.code_postal }} {{ data.ville }}</span>{% endif %}
+  {% if data.linkedin %}<span><b>LinkedIn :</b> {{ data.linkedin }}</span>{% endif %}
+</div>
+
+<div class="content">
+  <div class="grille">
+    <div class="col-g">
+      {% if data.profil %}<section><h2>Profil</h2><p>{{ data.profil }}</p></section>{% endif %}
+      {% if data.experiences %}<section><h2>Expériences professionnelles</h2>
+        {% for exp in data.experiences %}<div class="item">
+          <div class="titre-item">{{ exp.poste }}</div>
+          <div class="sous-titre">{{ exp.entreprise }}{% if exp.lieu %} — {{ exp.lieu }}{% endif %} | {{ exp.debut }} - {{ exp.fin }}</div>
+          {% if exp.description %}<div class="desc">{{ exp.description }}</div>{% endif %}
+        </div>{% endfor %}
+      </section>{% endif %}
+      {% if data.formations %}<section><h2>Formations</h2>
+        {% for form in data.formations %}<div class="item">
+          <div class="titre-item">{{ form.diplome }}</div>
+          <div class="sous-titre">{{ form.etablissement }} | {{ form.debut }} - {{ form.fin }}</div>
+        </div>{% endfor %}
+      </section>{% endif %}
+    </div>
+
+    <div class="col-d">
+      {% if data.competences %}<section><h2>Compétences</h2><div class="competences">{% for c in data.competences %}<span>{{ c }}</span>{% endfor %}</div></section>{% endif %}
+      {% if data.langues %}<section><h2>Langues</h2><div class="langues">{% for l in data.langues %}<div><b>{{ l.langue }}</b><span>{{ l.niveau }}</span></div>{% endfor %}</div></section>{% endif %}
+      {% if data.certifications %}<section><h2>Certifications</h2><ul style="margin-left:16px;font-size:12px;">{% for c in data.certifications %}<li>{{ c }}</li>{% endfor %}</ul></section>{% endif %}
+      {% if data.interets %}<section><h2>Intérêts</h2><div style="font-size:12px;">{{ data.interets|join(', ') }}</div></section>{% endif %}
+    </div>
+  </div>
+</div>
+</body>
+</html>

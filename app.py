@@ -1,570 +1,319 @@
-from flask import Flask, render_template, request
+"""
+CVPro — Générateur de CV & Lettres avec Premium
+Application Flask modulaire avec Factory + Blueprints.
+"""
 import os
 from datetime import datetime
-import re
 
-app = Flask(__name__)
+from flask import (Flask, jsonify, request, redirect, url_for, g,
+                   render_template)
+from flask_login import current_user, login_required
+from itsdangerous import URLSafeTimedSerializer
 
-UPLOAD_FOLDER = "static/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+from config import Config
+from extensions import db, login_manager, mail
+from models import User, CV
+from filters import register_filters
+from blueprints.admin_db import admin_db_bp
 
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+# ================================================================
+# FACTORY
+# ================================================================
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
 
+    # ==================== EXTENSIONS ====================
+    db.init_app(app)
+    login_manager.init_app(app)
+    mail.init_app(app)
 
-@app.route("/")
-def home():
-    # Données pré-remplies professionnelles
-    prefill_data = {
-        "civilite": "M.",
-        "nom": "Dupont",
-        "prenom": "Jean",
-        "metier": "Développeur Full Stack Senior",
-        "email": "jean.dupont@email.com",
-        "telephone": "+33 6 12 34 56 78",
-        "ville": "Paris, France",
-        "date_naissance": "1990-05-15",
-        "nationalite": "Française",
-        "permis": "B (Véhicule léger)",
+    # Configuration Flask-Login
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = "Connectez-vous pour continuer."
+    login_manager.login_message_category = 'warning'
 
-        "experiences": [
-            {
-                "poste": "Lead Développeur Full Stack",
-                "entreprise": "TechCorp Solutions",
-                "ville": "Paris",
-                "date_debut": "2021-01-15",
-                "date_fin": "",
-                "description": "Management d'une équipe de 8 développeurs\n"
-                               "Mise en place d'une architecture microservices\n"
-                               "Optimisation des performances (gain de 40%)\n"
-                               "Développement d'une plateforme SaaS avec React et Node.js"
-            },
-            {
-                "poste": "Développeur Full Stack",
-                "entreprise": "WebSolutions Agency",
-                "ville": "Lyon",
-                "date_debut": "2018-06-01",
-                "date_fin": "2020-12-31",
-                "description": "Conception de sites web e-commerce\n"
-                               "Développement d'APIs RESTful\n"
-                               "Migration vers des technologies modernes\n"
-                               "Formation des nouveaux développeurs"
-            }
-        ],
-
-        "formations": [
-            {
-                "diplome": "Master en Informatique",
-                "ecole": "Université Paris-Saclay",
-                "ville": "Paris",
-                "date_debut": "2016-09-01",
-                "date_fin": "2018-06-30",
-                "mention": "Mention Bien"
-            },
-            {
-                "diplome": "Licence en Mathématiques",
-                "ecole": "Université Paris-Diderot",
-                "ville": "Paris",
-                "date_debut": "2013-09-01",
-                "date_fin": "2016-06-30",
-                "mention": "Mention Assez Bien"
-            }
-        ],
-
-        "competences": {
-            "techniques": "Python, JavaScript (ES6+), TypeScript\n"
-                           "React, Vue.js, Node.js, Express\n"
-                           "Docker, Kubernetes, AWS (EC2, S3, RDS)\n"
-                           "Git, CI/CD (GitLab CI, Jenkins)\n"
-                           "MongoDB, PostgreSQL, Redis",
-
-            "methodologies": "Agile/Scrum, DevOps, TDD, Clean Code",
-
-            "autres": "Architecture Cloud, Microservices, API Design"
-        },
-
-        "langues": [
-            {
-                "langue": "Français",
-                "niveau": "Langue maternelle"
-            },
-            {
-                "langue": "Anglais",
-                "niveau": "Courant (TOEIC 950)"
-            },
-            {
-                "langue": "Espagnol",
-                "niveau": "Intermédiaire (B1)"
-            }
-        ],
-
-        "atouts": "Leadership d'équipe\n"
-                  "Autonomie et proactivité\n"
-                  "Rigueur et organisation\n"
-                  "Capacité d'adaptation\n"
-                  "Esprit d'innovation",
-
-        "loisirs": "Intelligence Artificielle\n"
-                   "Développement de projets open-source\n"
-                   "Lecture (tech, business, science-fiction)\n"
-                   "Sport (course à pied, natation)\n"
-                   "Voyages"
-    }
-
-    return render_template(
-        "index.html",
-        prefill=prefill_data
+    # Serializer pour les tokens de reset password (expire en 1h)
+    app.password_reset_serializer = URLSafeTimedSerializer(
+        app.config['SECRET_KEY'],
+        salt='password-reset-salt'
     )
 
+    # ==================== BASE DE DONNÉES ====================
+    with app.app_context():
+        db.create_all()
+        print("✅ Base SQLite prête (cvpro.db)")
 
-def format_date_range(date_debut, date_fin, current=False):
-    """Formate les dates pour l'affichage"""
+    # ==================== FILTRES JINJA ====================
+    register_filters(app)
 
-    if not date_debut:
-        return ""
+    # ==================== UTILISATEUR COURANT ====================
+    @app.before_request
+    def charger_utilisateur():
+        g.user = current_user if current_user.is_authenticated else None
 
-    try:
-        debut_obj = datetime.strptime(
-            date_debut,
-            "%Y-%m-%d"
-        )
+    @app.context_processor
+    def injecter_user():
+        return dict(current_user=g.get('user'))
 
-        debut_str = debut_obj.strftime("%B %Y")
+    # ==================== BLUEPRINTS ====================
+    from blueprints.main import main_bp
+    from blueprints.auth import auth_bp
+    from blueprints.premium import premium_bp
+    from blueprints.admin import admin_bp
+    from blueprints.password_reset import password_reset_bp
 
-        if current:
-            fin_str = "Présent"
-        elif date_fin:
-            fin_obj = datetime.strptime(
-                date_fin,
-                "%Y-%m-%d"
-            )
-            fin_str = fin_obj.strftime("%B %Y")
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(premium_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(password_reset_bp)
+    app.register_blueprint(admin_db_bp)
+
+    # ================================================================
+    # ⭐ ROUTE /mes-cv — PAGE HTML
+    # ================================================================
+    @app.route('/mes-cv', methods=['GET'], strict_slashes=False)
+    @login_required
+    def page_mes_cv():
+        """Affiche la page HTML 'Mes CV sauvegardés'."""
+        return render_template('mes_cv.html')
+
+    # ================================================================
+    # API : LISTER LES CV DE L'UTILISATEUR
+    # ================================================================
+    @app.route('/api/mes-cv', methods=['GET'], strict_slashes=False)
+    @login_required
+    def api_mes_cv_liste():
+        MAX_CV_GRATUIT = 3
+        recherche = (request.args.get('q') or '').strip().lower()
+        tri = request.args.get('tri', 'recent')
+
+        query = CV.query.filter_by(user_id=current_user.id)
+
+        if recherche:
+            query = query.filter(CV.titre.ilike(f'%{recherche}%'))
+
+        if tri == 'ancien':
+            query = query.order_by(CV.updated_at.asc())
+        elif tri == 'titre':
+            query = query.order_by(CV.titre.asc())
         else:
-            fin_str = "Présent"
+            query = query.order_by(CV.updated_at.desc())
 
-        # Calcul de la durée
-        if current or not date_fin:
-            fin_date = datetime.now()
-        else:
-            fin_date = datetime.strptime(
-                date_fin,
-                "%Y-%m-%d"
-            )
+        cvs = query.all()
+        total = len(cvs)
 
-        duration = fin_date - debut_obj
+        return jsonify({
+            'success': True,
+            'cvs': [cv.to_dict() for cv in cvs],
+            'total': total,
+            'max': None if current_user.premium else MAX_CV_GRATUIT,
+            'premium': current_user.premium,
+            'peut_creer': (current_user.premium or total < MAX_CV_GRATUIT),
+        })
 
-        years = duration.days // 365
-        months = (duration.days % 365) // 30
+    # ================================================================
+    # API : DÉTAIL D'UN CV
+    # ================================================================
+    @app.route('/api/mes-cv/<int:cv_id>', methods=['GET'], strict_slashes=False)
+    @login_required
+    def api_mes_cv_detail(cv_id):
+        cv = CV.query.filter_by(id=cv_id, user_id=current_user.id).first()
+        if not cv:
+            return jsonify({'success': False, 'error': 'CV introuvable'}), 404
+        return jsonify({'success': True, 'cv': cv.to_dict(complet=True)})
 
-        if years > 0:
-            duration_str = f"{years} an"
+    # ================================================================
+    # API : CRÉER / METTRE À JOUR UN CV
+    # ================================================================
+    @app.route('/api/mes-cv', methods=['POST'], strict_slashes=False)
+    @login_required
+    def api_mes_cv_sauvegarder():
+        import json
+        MAX_CV_GRATUIT = 3
 
-            if years > 1:
-                duration_str += "s"
+        data = request.json or {}
+        cv_id = data.get('cv_id')
+        titre = (data.get('titre') or '').strip()
+        modele = data.get('modele', 'modele1')
+        donnees = data.get('donnees') or {}
+        photo = data.get('photo')
+        couleur = data.get('couleur', '#f39c12')
 
-            if months > 0:
-                duration_str += f" {months} mois"
+        # Validation
+        if not titre:
+            return jsonify({'success': False, 'error': 'Le titre est obligatoire'}), 400
+        if len(titre) > 150:
+            return jsonify({'success': False, 'error': 'Titre trop long (150 max)'}), 400
+        if not donnees:
+            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
 
-        elif months > 0:
-            duration_str = f"{months} mois"
+        try:
+            # ----- MODIFICATION -----
+            if cv_id:
+                cv = CV.query.filter_by(id=cv_id, user_id=current_user.id).first()
+                if not cv:
+                    return jsonify({'success': False, 'error': 'CV introuvable'}), 404
 
-        else:
-            duration_str = "Moins d'un mois"
+                cv.titre = titre
+                cv.modele = modele
+                cv.donnees_json = json.dumps(donnees, ensure_ascii=False)
+                cv.photo = photo
+                cv.couleur = couleur
+                db.session.commit()
 
-        return f"{debut_str} - {fin_str} · {duration_str}"
-
-    except ValueError:
-        return ""
-
-
-@app.route("/generate", methods=["POST"])
-def generate():
-
-    try:
-
-        # ==================================================
-        # CHOIX DU STYLE DE CV
-        # ==================================================
-
-        cv_style = request.form.get(
-            "cv_style",
-            "modern"
-        )
-
-        # ==================================================
-        # INFORMATIONS PERSONNELLES
-        # ==================================================
-
-        civilite = request.form.get(
-            "civilite",
-            ""
-        )
-
-        nom = request.form.get(
-            "nom",
-            ""
-        )
-
-        prenom = request.form.get(
-            "prenom",
-            ""
-        )
-
-        metier = request.form.get(
-            "metier",
-            ""
-        )
-
-        email = request.form.get(
-            "email",
-            ""
-        )
-
-        telephone = request.form.get(
-            "telephone",
-            ""
-        )
-
-        ville = request.form.get(
-            "ville",
-            ""
-        )
-
-        date_naissance = request.form.get(
-            "date_naissance",
-            ""
-        )
-
-        nationalite = request.form.get(
-            "nationalite",
-            ""
-        )
-
-        permis = request.form.get(
-            "permis",
-            ""
-        )
-
-        # ==================================================
-        # EXPERIENCES
-        # ==================================================
-
-        experiences = []
-
-        exp_count = int(
-            request.form.get(
-                "experience_count",
-                0
-            )
-        )
-
-        for i in range(exp_count):
-
-            poste = request.form.get(
-                f"exp_{i}_poste",
-                ""
-            )
-
-            entreprise = request.form.get(
-                f"exp_{i}_entreprise",
-                ""
-            )
-
-            exp_ville = request.form.get(
-                f"exp_{i}_ville",
-                ""
-            )
-
-            date_debut = request.form.get(
-                f"exp_{i}_date_debut",
-                ""
-            )
-
-            date_fin = request.form.get(
-                f"exp_{i}_date_fin",
-                ""
-            )
-
-            current = (
-                request.form.get(
-                    f"exp_{i}_current"
-                ) == "on"
-            )
-
-            description = request.form.get(
-                f"exp_{i}_description",
-                ""
-            )
-
-            if poste and entreprise:
-
-                date_range = format_date_range(
-                    date_debut,
-                    date_fin,
-                    current
-                )
-
-                experiences.append({
-                    "poste": poste,
-                    "entreprise": entreprise,
-                    "ville": exp_ville,
-                    "date_range": date_range,
-                    "description": description.replace(
-                        "\n",
-                        "<br>"
-                    ),
-                    "current": current
+                return jsonify({
+                    'success': True,
+                    'message': 'CV mis à jour !',
+                    'cv_id': cv.id,
+                    'action': 'updated',
                 })
 
-        # ==================================================
-        # FORMATIONS
-        # ==================================================
+            # ----- CRÉATION -----
+            total = CV.query.filter_by(user_id=current_user.id).count()
+            if not current_user.premium and total >= MAX_CV_GRATUIT:
+                return jsonify({
+                    'success': False,
+                    'error': f'Limite de {MAX_CV_GRATUIT} CV atteinte',
+                    'limite_atteinte': True,
+                    'max': MAX_CV_GRATUIT,
+                }), 403
 
-        formations = []
-
-        formation_count = int(
-            request.form.get(
-                "formation_count",
-                0
+            cv = CV(
+                user_id=current_user.id,
+                titre=titre,
+                modele=modele,
+                donnees_json=json.dumps(donnees, ensure_ascii=False),
+                photo=photo,
+                couleur=couleur,
             )
-        )
+            db.session.add(cv)
+            db.session.commit()
 
-        for i in range(formation_count):
+            return jsonify({
+                'success': True,
+                'message': 'CV sauvegardé !',
+                'cv_id': cv.id,
+                'action': 'created',
+                'total': total + 1,
+            }), 201
 
-            diplome = request.form.get(
-                f"formation_{i}_diplome",
-                ""
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Erreur sauvegarde CV : {e}")
+            return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+
+    # ================================================================
+    # API : SUPPRIMER UN CV
+    # ================================================================
+    @app.route('/api/mes-cv/<int:cv_id>', methods=['DELETE'], strict_slashes=False)
+    @login_required
+    def api_mes_cv_supprimer(cv_id):
+        cv = CV.query.filter_by(id=cv_id, user_id=current_user.id).first()
+        if not cv:
+            return jsonify({'success': False, 'error': 'CV introuvable'}), 404
+
+        try:
+            db.session.delete(cv)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'CV supprimé'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    # ================================================================
+    # API : DUPLIQUER UN CV (PREMIUM)
+    # ================================================================
+    @app.route('/api/mes-cv/<int:cv_id>/dupliquer', methods=['POST'], strict_slashes=False)
+    @login_required
+    def api_mes_cv_dupliquer(cv_id):
+        if not current_user.premium:
+            return jsonify({
+                'success': False,
+                'error': 'Fonctionnalité Premium',
+                'need_premium': True,
+            }), 403
+
+        cv = CV.query.filter_by(id=cv_id, user_id=current_user.id).first()
+        if not cv:
+            return jsonify({'success': False, 'error': 'CV introuvable'}), 404
+
+        try:
+            nouveau = CV(
+                user_id=current_user.id,
+                titre=f"{cv.titre} (copie)",
+                modele=cv.modele,
+                donnees_json=cv.donnees_json,
+                photo=cv.photo,
+                couleur=cv.couleur,
             )
+            db.session.add(nouveau)
+            db.session.commit()
+            return jsonify({'success': True, 'cv_id': nouveau.id, 'message': 'CV dupliqué'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'error': str(e)}), 500
 
-            ecole = request.form.get(
-                f"formation_{i}_ecole",
-                ""
-            )
+    # ================================================================
+    # API : STATS UTILISATEUR
+    # ================================================================
+    @app.route('/api/mes-cv/stats', methods=['GET'], strict_slashes=False)
+    @login_required
+    def api_mes_cv_stats():
+        MAX_CV_GRATUIT = 3
+        total = CV.query.filter_by(user_id=current_user.id).count()
+        dernier = (CV.query
+                   .filter_by(user_id=current_user.id)
+                   .order_by(CV.updated_at.desc())
+                   .first())
 
-            form_ville = request.form.get(
-                f"formation_{i}_ville",
-                ""
-            )
+        return jsonify({
+            'success': True,
+            'total': total,
+            'max': None if current_user.premium else MAX_CV_GRATUIT,
+            'premium': current_user.premium,
+            'dernier_ajout': dernier.updated_at.strftime('%d/%m/%Y') if dernier else None,
+        })
 
-            date_debut = request.form.get(
-                f"formation_{i}_date_debut",
-                ""
-            )
+    # ==================== GESTION D'ERREURS ====================
+    @app.errorhandler(404)
+    def e404(e):
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Ressource introuvable', 'code': 404}), 404
+        return redirect(url_for('main.index'))
 
-            date_fin = request.form.get(
-                f"formation_{i}_date_fin",
-                ""
-            )
+    @app.errorhandler(405)
+    def e405(e):
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Méthode non autorisée', 'code': 405}), 405
+        return redirect(url_for('main.index'))
 
-            mention = request.form.get(
-                f"formation_{i}_mention",
-                ""
-            )
+    @app.errorhandler(500)
+    def e500(e):
+        db.session.rollback()
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Erreur interne', 'code': 500}), 500
+        return redirect(url_for('main.index'))
 
-            if diplome and ecole:
-
-                date_range = format_date_range(
-                    date_debut,
-                    date_fin
-                )
-
-                formations.append({
-                    "diplome": diplome,
-                    "ecole": ecole,
-                    "ville": form_ville,
-                    "date_range": date_range,
-                    "mention": mention
-                })
-
-        # ==================================================
-        # COMPETENCES
-        # ==================================================
-
-        competences = {
-            "techniques": request.form.get(
-                "competences_techniques",
-                ""
-            ).replace(
-                "\n",
-                ", "
-            ),
-
-            "methodologies": request.form.get(
-                "competences_methodologies",
-                ""
-            ).replace(
-                "\n",
-                ", "
-            ),
-
-            "autres": request.form.get(
-                "competences_autres",
-                ""
-            ).replace(
-                "\n",
-                ", "
-            )
-        }
-
-        # ==================================================
-        # LANGUES
-        # ==================================================
-
-        langues = []
-
-        lang_count = int(
-            request.form.get(
-                "langue_count",
-                0
-            )
-        )
-
-        for i in range(lang_count):
-
-            langue = request.form.get(
-                f"langue_{i}_nom",
-                ""
-            )
-
-            niveau = request.form.get(
-                f"langue_{i}_niveau",
-                ""
-            )
-
-            if langue and niveau:
-
-                langues.append(
-                    f"{langue} : {niveau}"
-                )
-
-        # ==================================================
-        # ATOUTS
-        # ==================================================
-
-        atouts = request.form.get(
-            "atouts",
-            ""
-        ).split("\n")
-
-        # ==================================================
-        # LOISIRS
-        # ==================================================
-
-        loisirs = request.form.get(
-            "loisirs",
-            ""
-        ).split("\n")
-
-        # ==================================================
-        # PHOTO
-        # ==================================================
-
-        photo = request.files.get(
-            "photo"
-        )
-
-        photo_path = ""
-
-        if photo and photo.filename:
-
-            timestamp = datetime.now().strftime(
-                "%Y%m%d_%H%M%S"
-            )
-
-            filename = (
-                f"{timestamp}_{photo.filename}"
-            )
-
-            photo_path = os.path.join(
-                app.config["UPLOAD_FOLDER"],
-                filename
-            )
-
-            photo.save(photo_path)
-
-            photo_path = "/" + photo_path.replace(
-                "\\",
-                "/"
-            )
-
-        # ==================================================
-        # PROFIL SANS IA
-        # ==================================================
-
-        profil = ""
-
-        # ==================================================
-        # SELECTION DU TEMPLATE
-        # ==================================================
-
-        template_mapping = {
-            "modern": "modern.html",
-            "classic": "classic.html",
-            "creative": "creative.html",
-            "minimal": "minimal.html",
-            "compact": "compact.html"
-        }
-
-        template_name = template_mapping.get(
-            cv_style,
-            "modern.html"
-        )
-
-        # ==================================================
-        # RENDU FINAL
-        # ==================================================
-
-        return render_template(
-
-            template_name,
-
-            civilite=civilite,
-            nom=nom,
-            prenom=prenom,
-            metier=metier,
-            email=email,
-            telephone=telephone,
-            ville=ville,
-            date_naissance=date_naissance,
-            nationalite=nationalite,
-            permis=permis,
-
-            profil=profil,
-
-            experiences=experiences,
-            formations=formations,
-
-            competences=competences,
-
-            langues=langues,
-
-            atouts=atouts,
-            loisirs=loisirs,
-
-            photo=photo_path,
-
-            cv_style=cv_style
-        )
-
-    except Exception as e:
-
-        return f"Erreur : {str(e)}", 500
+    return app
 
 
-# ======================================================
+# ================================================================
 # LANCEMENT
-# ======================================================
+# ================================================================
+app = create_app()
 
-if __name__ == "__main__":
-
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
-
-    app.run(
-        host="0.0.0.0",
-        port=port,
-        debug=True
-    )
+if __name__ == '__main__':
+    print("\n" + "=" * 60)
+    print("🚀 CVPro — Serveur Flask")
+    print("=" * 60)
+    print("📄 Accueil          : http://127.0.0.1:5000")
+    print("👤 Inscription      : http://127.0.0.1:5000/register")
+    print("🔐 Connexion        : http://127.0.0.1:5000/login")
+    print("🔑 Mot de passe oublié : http://127.0.0.1:5000/mot-de-passe-oublie")
+    print("👤 Mon compte       : http://127.0.0.1:5000/mon-compte")
+    print("📂 Mes CV           : http://127.0.0.1:5000/mes-cv")
+    print("📊 Admin            : http://127.0.0.1:5000/admin")
+    print("=" * 60 + "\n")
+    app.run(debug=True)

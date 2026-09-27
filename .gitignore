@@ -1,0 +1,216 @@
+# ================================================================
+# CVPro — .gitignore
+# Fichiers et dossiers à ne PAS envoyer sur Git
+# ================================================================
+
+# ----- FICHIERS SECRETS (⚠️ CRITIQUE) -----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# ----- BASE DE DONNÉES -----
+*.db
+*.sqlite
+*.sqlite3
+covoiturage.db
+multi_agents.db
+instance/
+
+# ----- STATISTIQUES LOCALES -----
+stats.json
+brouillon.json
+
+# ----- FICHIERS CLIENTS / UPLOADS -----
+clients/
+uploads/
+media/
+static/uploads/
+static/media/
+
+# ===== PYTHON =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ----- ENVIRONNEMENT VIRTUEL -----
+venv/
+env/
+ENV/
+.venv/
+.env.d/
+pyvenv.cfg
+.python-version
+
+# ----- OUTILS DE DEV -----
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pytype/
+
+# ===== ÉDITEURS / IDE =====
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vimrc.local
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# NetBeans
+nbproject/
+
+# ===== SYSTÈME D'EXPLOITATION =====
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.DocumentRevisions-V100
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# ===== LOGS & TEMPORAIRES =====
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pip-log.txt
+pip-delete-this-directory.txt
+*.bak
+*.backup
+*.old
+*.tmp
+*.temp
+*.cache
+
+# ===== FRONT-END (si tu utilises npm plus tard) =====
+node_modules/
+package-lock.json
+yarn.lock
+dist/
+build/
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+
+# ===== FLASK / PYTHON SPÉCIFIQUE =====
+instance/
+.webassets-cache
+flask_session/
+sessions/
+
+# ===== STOCKAGE LOCAL DES CV/LETTRES GÉNÉRÉS =====
+exports/
+pdfs/
+generated/
+documents/
+
+# ===== BACKUPS =====
+backups/
+backup/
+*.zip
+*.tar.gz
+*.tar
+!static/*.zip
+!static/*.tar.gz
+
+# ===== FICHIERS PERSONNELS =====
+notes.md
+TODO.md
+todo.txt
+brouillon.txt
+temp/
+sandbox/
+playground/
+
+# ===== FICHIERS D'EXPORT CLIENT =====
+factures/
+receipts/
+invoices/
+
+# ===== COUVERTURE DE CODE =====
+.nyc_output/
+coverage/
+
+# ===== STRIPE CLI (temporaire) =====
+.stripe/
+stripe.log
+
+# ===== DOCKER (si tu en ajoutes) =====
+.dockerignore
+docker-compose.override.yml
+
+# ================================================================
+# FIN DU .gitignore
+# ================================================================
+visiteurs.json

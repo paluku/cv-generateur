@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI', Arial, sans-serif; font-size:12.5px; color:#2c3e50; background:#fff; line-height:1.6; }
+  .bandeau { background:{{ data.couleur }}; color:#fff; padding:24px 22mm; }
+  .bandeau h1 { font-size:24px; }
+  .bandeau .sous { font-size:13px; opacity:.9; margin-top:4px; }
+  .bandeau .contact { font-size:11px; opacity:.9; margin-top:10px; }
+  .bandeau .contact span { margin-right:14px; }
+  .content { padding:22mm; }
+  .destinataire { background:#f4f6f9; padding:14px 18px; border-left:4px solid {{ data.couleur }}; margin-bottom:22px; font-size:12px; }
+  .destinataire b { color:{{ data.couleur }}; }
+  .lieu-date { text-align:right; font-size:12px; color:#7f8c8d; margin-bottom:16px; }
+  .objet { background:{{ data.couleur }}; color:#fff; display:inline-block; padding:6px 16px; border-radius:20px; font-size:12px; font-weight:600; margin-bottom:20px; }
+  .appel { font-weight:600; margin-bottom:12px; color:{{ data.couleur }}; }
+  p { text-align:justify; margin-bottom:12px; }
+  .politesse { margin-top:20px; margin-bottom:30px; }
+  .signature { text-align:right; }
+  .signature b { display:block; color:{{ data.couleur }}; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="bandeau">
+  <h1>{{ data.prenom }} {{ data.nom }}</h1>
+  <div class="sous">Candidature — {{ data.poste }}</div>
+  <div class="contact">
+    {% if data.adresse %}<span>📍 {{ data.adresse }}, {{ data.code_postal }} {{ data.ville }}</span>{% endif %}
+    {% if data.telephone %}<span>📞 {{ data.telephone }}</span>{% endif %}
+    {% if data.email %}<span>✉ {{ data.email }}</span>{% endif %}
+  </div>
+</div>
+
+<div class="content">
+  <div class="destinataire">
+    <b>{{ data.entreprise }}</b><br>
+    {{ data.entreprise_adresse }}<br>
+    {{ data.entreprise_cp }} {{ data.entreprise_ville }}
+    {% if data.destinataire %}<br><em>{{ data.destinataire }}</em>{% endif %}
+  </div>
+
+  <div class="lieu-date">{{ data.lieu_lettre }}, le {{ data.date_lettre|format_date_full }}</div>
+
+  <div class="objet">Objet : Candidature au poste de {{ data.poste }}{% if data.reference %} — {{ data.reference }}{% endif %}</div>
+
+  <p class="appel">{{ data.appel }}</p>
+  {% if data.para1 %}<p>{{ data.para1 }}</p>{% endif %}
+  {% if data.para2 %}<p>{{ data.para2 }}</p>{% endif %}
+  {% if data.para3 %}<p>{{ data.para3 }}</p>{% endif %}
+  {% if data.para4 %}<p>{{ data.para4 }}</p>{% endif %}
+
+  <p class="politesse">{{ data.politesse }}</p>
+
+  <div class="signature">
+    <b>{{ data.signature or (data.prenom ~ ' ' ~ data.nom) }}</b>
+  </div>
+</div>
+</body>
+</html>

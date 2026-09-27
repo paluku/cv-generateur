@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Paiement annulé — CVPro</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+  }
+  .box {
+    background: #fff;
+    color: #2c3e50;
+    border-radius: 24px;
+    padding: 50px 40px;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 30px 80px rgba(0,0,0,.4);
+  }
+  .ico {
+    font-size: 4rem;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 1.8rem;
+    color: #64748b;
+    margin-bottom: 12px;
+  }
+  p {
+    color: #64748b;
+    font-size: .95rem;
+    margin-bottom: 30px;
+    line-height: 1.6;
+  }
+  .btn {
+    display: inline-block;
+    background: #f39c12;
+    color: #fff;
+    text-decoration: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: all .2s;
+    margin: 5px;
+  }
+  .btn:hover { background: #e67e22; transform: translateY(-2px); }
+  .btn-ghost {
+    background: transparent;
+    color: #64748b;
+    border: 2px solid #e2e8f0;
+  }
+  .btn-ghost:hover { border-color: #f39c12; color: #f39c12; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="ico">💔</div>
+  <h1>Paiement annulé</h1>
+  <p>
+    Ton paiement a été annulé. Aucun montant n'a été débité.<br>
+    Tu peux revenir quand tu veux — l'offre à 4,99 € reste valable.
+  </p>
+  <a href="/" class="btn">← Retour au site</a>
+  <a href="/#creer" class="btn btn-ghost">Voir les modèles Pro</a>
+</div>
+</body>
+</html>

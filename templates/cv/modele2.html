@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: {{ data.police|default("'Georgia', serif")|safe }};
+    font-size: 13px;
+    color: #2c3e50;
+    line-height: 1.5;
+    background: #fff;
+    display: flex;
+    min-height: 297mm;
+  }
+
+  /* ==================== COLONNE LATÉRALE ==================== */
+  .side {
+    width: 70mm;
+    background: {{ data.couleur }};
+    color: #fff;
+    padding: 15mm 8mm;
+  }
+  .side h1 {
+    font-size: 22px;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .side .titre {
+    font-size: 13px;
+    opacity: .9;
+    font-style: italic;
+    margin-bottom: 20px;
+  }
+  .side .photo {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    display: block;
+    margin: 0 auto 20px;
+  }
+  .side h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255,255,255,.3);
+    padding-bottom: 4px;
+    margin: 18px 0 8px;
+  }
+  .side p,
+  .side div {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  .side .competences span {
+    display: block;
+    font-size: 11px;
+    margin-bottom: 5px;
+  }
+  .side .langues div {
+    margin-bottom: 8px;
+  }
+
+  /* ==================== CONTENU PRINCIPAL ==================== */
+  .main {
+    flex: 1;
+    padding: 15mm 10mm;
+  }
+  .main h2 {
+    font-size: 14px;
+    color: {{ data.couleur }};
+    border-bottom: 2px solid {{ data.couleur }};
+    padding-bottom: 4px;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    page-break-after: avoid;
+  }
+  .main section {
+    margin-bottom: 22px;
+    page-break-inside: avoid;
+  }
+  .main section:first-child h2 {
+    margin-top: 0;
+  }
+
+  .item {
+    margin-bottom: 14px;
+    page-break-inside: avoid;
+    padding-left: 12px;
+    border-left: 3px solid #ecf0f1;
+  }
+  .item .ligne {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .item .titre-item {
+    font-weight: bold;
+    font-size: 13px;
+    color: #2c3e50;
+  }
+  .item .date {
+    font-size: 11px;
+    color: #7f8c8d;
+    white-space: nowrap;
+  }
+  .item .sous-titre {
+    font-size: 11.5px;
+    color: #7f8c8d;
+    margin-top: 2px;
+  }
+  .item .desc {
+    font-size: 12px;
+    margin-top: 5px;
+    color: #34495e;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== COLONNE LATÉRALE ==================== -->
+<aside class="side">
+
+  {% if data.photo %}
+    <img src="{{ data.photo }}" class="photo" alt="Photo de profil">
+  {% endif %}
+
+  <h1>{{ data.prenom }}<br>{{ data.nom }}</h1>
+  <div class="titre">{{ data.titre }}</div>
+
+  <h3>Contact</h3>
+  {% if data.email %}<div>✉ {{ data.email }}</div>{% endif %}
+  {% if data.telephone %}<div>☎ {{ data.telephone }}</div>{% endif %}
+  {% if data.adresse %}<div>⌂ {{ data.adresse }}</div>{% endif %}
+  {% if data.code_postal or data.ville %}
+    <div>{{ data.code_postal }} {{ data.ville }}</div>
+  {% endif %}
+  {% if data.pays %}<div>{{ data.pays }}</div>{% endif %}
+  {% if data.linkedin %}<div>in {{ data.linkedin }}</div>{% endif %}
+  {% if data.site %}<div>🌐 {{ data.site }}</div>{% endif %}
+
+  {% if data.competences %}
+    <h3>Compétences</h3>
+    <div class="competences">
+      {% for c in data.competences %}
+        <span>• {{ c }}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if data.langues %}
+    <h3>Langues</h3>
+    <div class="langues">
+      {% for l in data.langues %}
+        <div><b>{{ l.langue }}</b><br>{{ l.niveau }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if data.interets %}
+    <h3>Intérêts</h3>
+    <div>
+      {% for i in data.interets %}
+        <div>• {{ i }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</aside>
+
+<!-- ==================== CONTENU PRINCIPAL ==================== -->
+<main class="main">
+
+  {% if data.profil %}
+    <section>
+      <h2>À propos</h2>
+      <p>{{ data.profil }}</p>
+    </section>
+  {% endif %}
+
+  {% if data.experiences %}
+    <section>
+      <h2>Expériences</h2>
+      {% for exp in data.experiences %}
+        <div class="item">
+          <div class="ligne">
+            <span class="titre-item">{{ exp.poste }}</span>
+            <span class="date">{{ exp.debut|format_date }} - {{ exp.fin|format_date }}</span>
+          </div>
+          <div class="sous-titre">{{ exp.entreprise }}{% if exp.lieu %} — {{ exp.lieu }}{% endif %}</div>
+          {% if exp.description %}
+            <div class="desc">{{ exp.description }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if data.formations %}
+    <section>
+      <h2>Formations</h2>
+      {% for form in data.formations %}
+        <div class="item">
+          <div class="ligne">
+            <span class="titre-item">{{ form.diplome }}</span>
+            <span class="date">{{ form.debut|format_date }} - {{ form.fin|format_date }}</span>
+          </div>
+          <div class="sous-titre">{{ form.etablissement }}{% if form.lieu %} — {{ form.lieu }}{% endif %}</div>
+          {% if form.description %}
+            <div class="desc">{{ form.description }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if data.certifications %}
+    <section>
+      <h2>Certifications</h2>
+      <ul style="margin-left:18px; font-size:12px;">
+        {% for c in data.certifications %}
+          <li>{{ c }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+</main>
+
+</body>
+</html>

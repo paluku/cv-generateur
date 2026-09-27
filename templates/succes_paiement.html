@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paiement réussi — CVPro Premium</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+  }
+  .box {
+    background: #fff;
+    color: #2c3e50;
+    border-radius: 24px;
+    padding: 50px 40px;
+    max-width: 520px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 30px 80px rgba(0,0,0,.4);
+    animation: pop .5s ease;
+  }
+  @keyframes pop {
+    0% { opacity: 0; transform: scale(.9); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .check-circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    display: grid;
+    place-items: center;
+    margin: 0 auto 24px;
+    font-size: 3rem;
+    color: #fff;
+    animation: bounce .6s ease .3s;
+    box-shadow: 0 10px 30px rgba(34, 197, 94, .4);
+  }
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .sous-titre {
+    color: #64748b;
+    font-size: 1rem;
+    margin-bottom: 30px;
+  }
+  .recu {
+    background: #f9fbfc;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 30px;
+    text-align: left;
+    border-left: 4px solid #22c55e;
+  }
+  .recu-ligne {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: .9rem;
+    border-bottom: 1px solid #e8ecf0;
+  }
+  .recu-ligne:last-child { border-bottom: none; }
+  .recu-ligne span:first-child { color: #64748b; }
+  .recu-ligne span:last-child { font-weight: 600; color: #2c3e50; }
+  .recu-total {
+    padding-top: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #22c55e;
+  }
+  .avantages {
+    text-align: left;
+    margin-bottom: 30px;
+    background: #f4f6f9;
+    padding: 20px;
+    border-radius: 14px;
+  }
+  .avantages h3 {
+    font-size: .95rem;
+    color: #2c3e50;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .avantages li {
+    list-style: none;
+    padding: 6px 0;
+    font-size: .9rem;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .avantages li::before {
+    content: '✅';
+    font-size: 1.1rem;
+  }
+  .btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #7c3aed, #f39c12);
+    color: #fff;
+    text-decoration: none;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all .2s;
+    box-shadow: 0 6px 20px rgba(124,58,237,.35);
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(124,58,237,.5);
+  }
+  .note {
+    margin-top: 20px;
+    font-size: .8rem;
+    color: #94a3b8;
+  }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="check-circle">✓</div>
+
+  <h1>Paiement confirmé !</h1>
+  <p class="sous-titre">
+    Bienvenue dans <strong>CVPro Premium</strong> 🎉
+    Ton compte a été mis à jour.
+  </p>
+
+  <div class="recu">
+    <div class="recu-ligne">
+      <span>Produit</span>
+      <span>CVPro Premium</span>
+    </div>
+    {% if email %}
+    <div class="recu-ligne">
+      <span>Email</span>
+      <span>{{ email }}</span>
+    </div>
+    {% endif %}
+    <div class="recu-ligne">
+      <span>Statut</span>
+      <span>{% if verifie %}Payé ✅{% else %}En vérification{% endif %}</span>
+    </div>
+    {% if session_id %}
+    <div class="recu-ligne">
+      <span>Référence</span>
+      <span style="font-size:.8rem;">{{ session_id[:30] }}…</span>
+    </div>
+    {% endif %}
+    <div class="recu-ligne recu-total">
+      <span>Total payé</span>
+      <span>{{ montant }}</span>
+    </div>
+  </div>
+
+  <div class="avantages">
+    <h3>✨ Tes avantages débloqués</h3>
+    <ul>
+      <li>Accès aux 3 modèles Pro (Executive, Luxe, Signature)</li>
+      <li>Aucun filigrane sur tous tes CV</li>
+      <li>Lettres de motivation illimitées</li>
+      <li>Accès à vie, aucune limite</li>
+    </ul>
+  </div>
+
+  <a href="/" class="btn">🚀 Commencer à créer mon CV Pro</a>
+
+  <p class="note">
+    🔒 Paiement sécurisé par Stripe · Un reçu t'a été envoyé par email
+  </p>
+</div>
+</body>
+</html>

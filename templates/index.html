@@ -1,410 +1,637 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV Builder Pro - Générateur de CV IA</title>
-      <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CVPro — Générateur de CV professionnel</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
 </head>
-<body>
-    <div class="container">
-        <h1>📄 Générateur de CV Professionnel</h1>
-        <p class="subtitle">Créez votre CV en quelques clics avec l'intelligence artificielle</p>
 
-        <form action="/generate" method="POST" enctype="multipart/form-data" id="cvForm">
-            
-            <!-- ===== CHOIX DU STYLE DE CV ===== -->
-            <div class="form-section" style="border-left-color: #7c3aed;">
-                <h2>🎨 Choisissez votre style de CV</h2>
-                <div class="style-grid">
-                    <label class="style-card selected" onclick="selectStyle(this)">
-                        <input type="radio" name="cv_style" value="modern" checked>
-                        <span class="check-mark">✓</span>
-                        <span class="style-icon">💼</span>
-                        <span class="style-name">Moderne</span>
-                        <span class="style-desc">Design épuré avec couleurs</span>
-                    </label>
-                    <label class="style-card" onclick="selectStyle(this)">
-                        <input type="radio" name="cv_style" value="classic">
-                        <span class="check-mark">✓</span>
-                        <span class="style-icon">📋</span>
-                        <span class="style-name">Classique</span>
-                        <span class="style-desc">Traditionnel et sobre</span>
-                    </label>
-                    <label class="style-card" onclick="selectStyle(this)">
-                        <input type="radio" name="cv_style" value="creative">
-                        <span class="check-mark">✓</span>
-                        <span class="style-icon">🎨</span>
-                        <span class="style-name">Créatif</span>
-                        <span class="style-desc">Original et artistique</span>
-                    </label>
-                    <label class="style-card" onclick="selectStyle(this)">
-                        <input type="radio" name="cv_style" value="minimal">
-                        <span class="check-mark">✓</span>
-                        <span class="style-icon">⬜</span>
-                        <span class="style-name">Minimal</span>
-                        <span class="style-desc">Très épuré, blanc</span>
-                    </label>
-                    <label class="style-card" onclick="selectStyle(this)">
-                        <input type="radio" name="cv_style" value="compact">
-                        <span class="check-mark">✓</span>
-                        <span class="style-icon">📐</span>
-                        <span class="style-name">Compact</span>
-                        <span class="style-desc">Gain de place</span>
-                    </label>
-                </div>
-                <p style="font-size: 12px; color: #6b7280; margin-top: 12px;">💡 Cliquez sur une carte pour sélectionner le style de votre CV</p>
-            </div>
+<body data-connecte="{{ 'true' if current_user.is_authenticated else 'false' }}">
+<!-- ============ HEADER ============ -->
+<header class="topbar">
+  <div class="wrap">
+    <a href="#accueil" class="logo">CV<span>Pro</span></a>
 
-            <!-- INFORMATIONS PERSONNELLES -->
-            <div class="form-section">
-                <h2>👤 Informations Personnelles</h2>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Civilité</label>
-                        <select name="civilite">
-                            <option value="M." {% if prefill.civilite == 'M.' %}selected{% endif %}>M.</option>
-                            <option value="Mme" {% if prefill.civilite == 'Mme' %}selected{% endif %}>Mme</option>
-                            <option value="Mlle" {% if prefill.civilite == 'Mlle' %}selected{% endif %}>Mlle</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Prénom <span class="required">*</span></label>
-                        <input type="text" name="prenom" value="{{ prefill.prenom }}" required>
-                    </div>
-                </div>
+    <nav class="menu" id="menu">
+  <a href="#accueil" class="actif">Accueil</a>
+  <a href="#creer" class="fort">Créer mon CV</a>
+  <a href="#lettre">Lettres</a>
+  <a href="#modeles">Modèles</a>
+  <a href="#premium" class="lien-premium">💎 Premium</a>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nom <span class="required">*</span></label>
-                        <input type="text" name="nom" value="{{ prefill.nom }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Métier <span class="required">*</span></label>
-                        <input type="text" name="metier" value="{{ prefill.metier }}" required>
-                    </div>
-                </div>
+  {% if current_user.is_authenticated %}
+    <!-- ⭐ CONNECTÉ -->
+    <a href="/mes-cv" class="lien-mes-cv">
+      📂 Mes CV
+    </a>
+    <a href="/mon-compte" class="lien-compte">
+      👤 {{ current_user.nom }}{% if current_user.premium %} ⭐{% endif %}
+    </a>
+    <a href="/logout" class="btn-mini">Déconnexion</a>
+  {% else %}
+    <!-- ⭐ NON CONNECTÉ -->
+    <a href="/login">Connexion</a>
+    <a href="/register" class="btn-or-inscription">
+      Inscription
+    </a>
+  {% endif %}
+</nav>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Email <span class="required">*</span></label>
-                        <input type="email" name="email" value="{{ prefill.email }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Téléphone <span class="required">*</span></label>
-                        <input type="tel" name="telephone" value="{{ prefill.telephone }}" required>
-                    </div>
-                </div>
+    <button class="burger" id="burger" aria-label="Menu">☰</button>
+  </div>
+</header>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Ville <span class="required">*</span></label>
-                        <input type="text" name="ville" value="{{ prefill.ville }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Date de naissance</label>
-                        <input type="date" name="date_naissance" value="{{ prefill.date_naissance }}">
-                    </div>
-                </div>
+<main>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nationalité</label>
-                        <input type="text" name="nationalite" value="{{ prefill.nationalite }}">
-                    </div>
-                    <div class="form-group">
-                        <label>Permis de conduire</label>
-                        <input type="text" name="permis" value="{{ prefill.permis }}">
-                    </div>
-                </div>
-            </div>
+<!-- ============ HERO ============ -->
+<section class="hero" id="accueil">
+  <div class="wrap hero-in">
+    <div class="hero-txt">
+      <span class="pill">✨ 13 modèles · Export PDF instantané · Premium disponible</span>
+      <h1>Votre CV professionnel,<br/><span>prêt en 3 minutes.</span></h1>
+      <p>Choisissez un modèle, remplissez le formulaire, téléchargez votre CV en PDF.
+         Gratuit, sans inscription. Passez Premium pour débloquer les modèles exclusifs.</p>
+      <div class="hero-actions">
+        <a href="#creer" class="btn btn-or">Créer mon CV maintenant</a>
+        <a href="#premium" class="btn btn-ghost">💎 Découvrir Premium version payante</a>
+      </div>
 
-            <!-- EXPÉRIENCES -->
-            <div class="form-section">
-                <h2>💼 Expériences Professionnelles <span class="badge">Ajoutez plusieurs</span></h2>
-                <div id="experiences-container">
-                    {% for exp in prefill.experiences %}
-                    <div class="experience-item">
-                        <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Poste <span class="required">*</span></label>
-                                <input type="text" name="exp_{{ loop.index0 }}_poste" value="{{ exp.poste }}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Entreprise <span class="required">*</span></label>
-                                <input type="text" name="exp_{{ loop.index0 }}_entreprise" value="{{ exp.entreprise }}" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Ville</label>
-                                <input type="text" name="exp_{{ loop.index0 }}_ville" value="{{ exp.ville }}">
-                            </div>
-                            <div class="form-group">
-                                <label>Date de début <span class="required">*</span></label>
-                                <input type="date" name="exp_{{ loop.index0 }}_date_debut" value="{{ exp.date_debut }}" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Date de fin</label>
-                                <input type="date" name="exp_{{ loop.index0 }}_date_fin" value="{{ exp.date_fin if exp.date_fin != 'Présent' else '' }}">
-                            </div>
-                            <div class="form-group checkbox-group">
-                                <input type="checkbox" name="exp_{{ loop.index0 }}_current" {% if exp.date_fin == 'Présent' %}checked{% endif %}>
-                                <label>Poste actuel</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea name="exp_{{ loop.index0 }}_description" rows="4">{{ exp.description }}</textarea>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <button type="button" class="btn-add" onclick="addExperience()">+ Ajouter une expérience</button>
-            </div>
+      <!-- ⭐ COMPTEURS ⭐ -->
+   
+    </div>
+    <div class="hero-visu">
+      <div class="feuille f1"></div>
+      <div class="feuille f2"></div>
+      <div class="feuille f3">
+        <div class="fl-bar"></div>
+        <div class="fl-line w70"></div>
+        <div class="fl-line w45"></div>
+        <div class="fl-line w90"></div>
+        <div class="fl-line w80"></div>
+        <div class="fl-line w60"></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-            <!-- FORMATIONS -->
-            <div class="form-section">
-                <h2>🎓 Formations <span class="badge">Ajoutez plusieurs</span></h2>
-                <div id="formations-container">
-                    {% for form in prefill.formations %}
-                    <div class="formation-item">
-                        <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Diplôme <span class="required">*</span></label>
-                                <input type="text" name="formation_{{ loop.index0 }}_diplome" value="{{ form.diplome }}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>École <span class="required">*</span></label>
-                                <input type="text" name="formation_{{ loop.index0 }}_ecole" value="{{ form.ecole }}" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Ville</label>
-                                <input type="text" name="formation_{{ loop.index0 }}_ville" value="{{ form.ville }}">
-                            </div>
-                            <div class="form-group">
-                                <label>Date de début <span class="required">*</span></label>
-                                <input type="date" name="formation_{{ loop.index0 }}_date_debut" value="{{ form.date_debut }}" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Date de fin <span class="required">*</span></label>
-                                <input type="date" name="formation_{{ loop.index0 }}_date_fin" value="{{ form.date_fin }}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Mention</label>
-                                <input type="text" name="formation_{{ loop.index0 }}_mention" value="{{ form.mention }}">
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <button type="button" class="btn-add" onclick="addFormation()">+ Ajouter une formation</button>
-            </div>
-
-            <!-- COMPÉTENCES -->
-            <div class="form-section">
-                <h2>⚡ Compétences</h2>
-                <div class="form-group">
-                    <label>Compétences techniques</label>
-                    <textarea name="competences_techniques" rows="3">{{ prefill.competences.techniques }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Méthodologies</label>
-                    <textarea name="competences_methodologies" rows="2">{{ prefill.competences.methodologies }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Autres compétences</label>
-                    <textarea name="competences_autres" rows="2">{{ prefill.competences.autres }}</textarea>
-                </div>
-            </div>
-
-            <!-- LANGUES -->
-            <div class="form-section">
-                <h2>🌍 Langues</h2>
-                <div id="langues-container">
-                    {% for langue in prefill.langues %}
-                    <div class="langue-item">
-                        <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Langue</label>
-                                <input type="text" name="langue_{{ loop.index0 }}_nom" value="{{ langue.langue }}">
-                            </div>
-                            <div class="form-group">
-                                <label>Niveau</label>
-                                <input type="text" name="langue_{{ loop.index0 }}_niveau" value="{{ langue.niveau }}">
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <button type="button" class="btn-add" onclick="addLangue()">+ Ajouter une langue</button>
-            </div>
-
-            <!-- ATOUTS ET LOISIRS -->
-            <div class="form-section">
-                <h2>⭐ Qualités et Centres d'intérêt</h2>
-                <div class="form-group">
-                    <label>Atouts personnels (un par ligne)</label>
-                    <textarea name="atouts" rows="4">{{ prefill.atouts }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Loisirs (un par ligne)</label>
-                    <textarea name="loisirs" rows="4">{{ prefill.loisirs }}</textarea>
-                </div>
-            </div>
-
-            <!-- PHOTO -->
-            <div class="form-section">
-                <h2>📸 Photo</h2>
-                <div class="file-upload">
-                    <label class="file-upload-label">
-                        <input type="file" name="photo" accept="image/*">
-                        <div>📤 Cliquez pour télécharger votre photo</div>
-                        <small style="color: #9ca3af;">PNG, JPG, JPEG - Max 5MB</small>
-                    </label>
-                </div>
-            </div>
-
-            <!-- BOUTON DE SOUMISSION -->
-            <button type="submit" class="btn-submit">🚀 Générer mon CV</button>
-        </form>
+<!-- ============ GÉNÉRATEUR CV ============ -->
+<section class="builder" id="creer">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Étape 1 · 2 · 3</span>
+      <h2>Créez votre CV</h2>
+      <p>Choisissez un modèle, remplissez vos informations, téléchargez le PDF sur votre ordinateur.</p>
     </div>
 
-    <script>
-        let expCounter = {{ prefill.experiences|length }};
-        let formCounter = {{ prefill.formations|length }};
-        let langCounter = {{ prefill.langues|length }};
+    <div class="bloc-etape" id="modeles">
+      <h3 class="etape-titre"><span>1</span> Choisissez votre modèle</h3>
+      <div class="grille-modeles" id="grille-modeles"></div>
+    </div>
 
-        function selectStyle(card) {
-            document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            card.querySelector('input[type="radio"]').checked = true;
-        }
+    <div class="bloc-etape">
+      <h3 class="etape-titre"><span>2</span> Remplissez vos informations</h3>
 
-        function addExperience() {
-            const container = document.getElementById('experiences-container');
-            const template = `
-                <div class="experience-item">
-                    <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Poste <span class="required">*</span></label>
-                            <input type="text" name="exp_${expCounter}_poste" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Entreprise <span class="required">*</span></label>
-                            <input type="text" name="exp_${expCounter}_entreprise" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Ville</label>
-                            <input type="text" name="exp_${expCounter}_ville">
-                        </div>
-                        <div class="form-group">
-                            <label>Date de début <span class="required">*</span></label>
-                            <input type="date" name="exp_${expCounter}_date_debut" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Date de fin</label>
-                            <input type="date" name="exp_${expCounter}_date_fin">
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <input type="checkbox" name="exp_${expCounter}_current">
-                            <label>Poste actuel</label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="exp_${expCounter}_description" rows="4"></textarea>
-                    </div>
+      <div class="atelier">
+        <!-- ----- FORMULAIRE ----- -->
+        <div class="formulaire">
+
+          <fieldset class="carte">
+            <legend>Photo (optionnelle)</legend>
+            <div class="photo-zone">
+              <div class="photo-apercu" id="photo-apercu">👤</div>
+              <div>
+                <input type="file" id="photo-input" accept="image/png,image/jpeg" hidden/>
+                <button type="button" class="btn btn-mini" onclick="document.getElementById('photo-input').click()">Choisir une photo</button>
+                <button type="button" class="btn btn-mini btn-danger" id="photo-suppr">Supprimer</button>
+                <p class="aide">JPG ou PNG — 500 Ko max.</p>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 🎨 PERSONNALISATION VISUELLE -->
+          <fieldset class="carte">
+            <legend>🎨 Personnalisation visuelle</legend>
+            <div class="grille-2">
+              <label>Couleur d'accent
+                <div class="couleur-picker">
+                  <input type="color" id="choix-couleur" value="#f39c12"/>
+                  <div class="couleur-palette">
+                    <button type="button" class="pastille-couleur" data-couleur="#2c3e50" style="background:#2c3e50" title="Bleu nuit"></button>
+                    <button type="button" class="pastille-couleur" data-couleur="#3498db" style="background:#3498db" title="Bleu"></button>
+                    <button type="button" class="pastille-couleur" data-couleur="#8e44ad" style="background:#8e44ad" title="Violet"></button>
+                    <button type="button" class="pastille-couleur" data-couleur="#e67e22" style="background:#e67e22" title="Orange"></button>
+                    <button type="button" class="pastille-couleur" data-couleur="#e74c3c" style="background:#e74c3c" title="Rouge"></button>
+                    <button type="button" class="pastille-couleur" data-couleur="#16a085" style="background:#16a085" title="Turquoise"></button>
+                    <button type="button" class="pastille-couleur" data-couleur="#27ae60" style="background:#27ae60" title="Vert"></button>
+                    <button type="button" class="pastille-couleur" data-couleur="#9b59b6" style="background:#9b59b6" title="Mauve"></button>
+                  </div>
                 </div>
-            `;
-            container.insertAdjacentHTML('beforeend', template);
-            expCounter++;
-        }
+              </label>
+              <label>Police du CV
+                <select id="choix-police">
+                  <option value="Segoe UI">Segoe UI (moderne)</option>
+                  <option value="Georgia">Georgia (classique)</option>
+                  <option value="Helvetica Neue">Helvetica (minimaliste)</option>
+                  <option value="Consolas">Consolas (technique)</option>
+                  <option value="Palatino">Palatino (élégant)</option>
+                  <option value="Times New Roman">Times (académique)</option>
+                  <option value="Verdana">Verdana (lisible)</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
 
-        function addFormation() {
-            const container = document.getElementById('formations-container');
-            const template = `
-                <div class="formation-item">
-                    <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Diplôme <span class="required">*</span></label>
-                            <input type="text" name="formation_${formCounter}_diplome" required>
-                        </div>
-                        <div class="form-group">
-                            <label>École <span class="required">*</span></label>
-                            <input type="text" name="formation_${formCounter}_ecole" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Ville</label>
-                            <input type="text" name="formation_${formCounter}_ville">
-                        </div>
-                        <div class="form-group">
-                            <label>Date de début <span class="required">*</span></label>
-                            <input type="date" name="formation_${formCounter}_date_debut" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Date de fin <span class="required">*</span></label>
-                            <input type="date" name="formation_${formCounter}_date_fin" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Mention</label>
-                            <input type="text" name="formation_${formCounter}_mention">
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', template);
-            formCounter++;
-        }
+          <fieldset class="carte">
+            <legend>Informations personnelles</legend>
+            <div class="grille-2">
+              <label>Civilité
+                <select data-champ="civilite">
+                  <option value="">—</option>
+                  <option>Monsieur</option>
+                  <option>Madame</option>
+                </select>
+              </label>
+              <label>Poste recherché / Titre
+                <input type="text" data-champ="titre" placeholder="Développeur Web Full-Stack"/>
+              </label>
+              <label>Prénom *
+                <input type="text" data-champ="prenom" placeholder="Amadou"/>
+              </label>
+              <label>Nom *
+                <input type="text" data-champ="nom" placeholder="Diallo"/>
+              </label>
+              <label>Email
+                <input type="email" data-champ="email" placeholder="amadou.diallo@mail.com"/>
+              </label>
+              <label>Téléphone
+                <input type="tel" data-champ="telephone" placeholder="+33 6 12 34 56 78"/>
+              </label>
+              <label class="large">Adresse
+                <input type="text" data-champ="adresse" placeholder="12 rue de la Paix"/>
+              </label>
+              <label>Code postal
+                <input type="text" data-champ="code_postal" placeholder="75002"/>
+              </label>
+              <label>Ville
+                <input type="text" data-champ="ville" placeholder="Paris"/>
+              </label>
+              <label>Pays
+                <input type="text" data-champ="pays" placeholder="France"/>
+              </label>
+              <label>Date de naissance
+                <span class="date-champ">
+                  <input type="date" data-champ="date_naissance"/>
+                  <button type="button" class="date-toggle" title="Saisie manuelle">📅</button>
+                </span>
+              </label>
+              <label>Permis
+                <input type="text" data-champ="permis" placeholder="B"/>
+              </label>
+              <label>LinkedIn
+                <input type="text" data-champ="linkedin" placeholder="linkedin.com/in/amadou"/>
+              </label>
+              <label>Site / Portfolio
+                <input type="text" data-champ="site" placeholder="amadou.dev"/>
+              </label>
+            </div>
+          </fieldset>
 
-        function addLangue() {
-            const container = document.getElementById('langues-container');
-            const template = `
-                <div class="langue-item">
-                    <button type="button" class="remove-btn" onclick="removeItem(this)">✕ Supprimer</button>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Langue</label>
-                            <input type="text" name="langue_${langCounter}_nom">
-                        </div>
-                        <div class="form-group">
-                            <label>Niveau</label>
-                            <input type="text" name="langue_${langCounter}_niveau">
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', template);
-            langCounter++;
-        }
+          <fieldset class="carte">
+            <legend>Profil / Accroche</legend>
+            <textarea data-champ="profil" rows="4" placeholder="Développeur passionné avec 5 ans d'expérience..."></textarea>
+          </fieldset>
 
-        function removeItem(button) {
-            if (confirm('Supprimer cet élément ?')) {
-                button.closest('.experience-item, .formation-item, .langue-item').remove();
-            }
-        }
-    </script>
-		 <script src="{{ url_for('static', filename='script.js') }}"></script>
+          <fieldset class="carte">
+            <legend>Expériences professionnelles</legend>
+            <div id="liste-experiences"></div>
+            <button type="button" class="btn btn-add" data-ajout="experience">+ Ajouter une expérience</button>
+          </fieldset>
+
+          <fieldset class="carte">
+            <legend>Formations</legend>
+            <div id="liste-formations"></div>
+            <button type="button" class="btn btn-add" data-ajout="formation">+ Ajouter une formation</button>
+          </fieldset>
+
+          <fieldset class="carte">
+            <legend>Compétences</legend>
+            <textarea id="competences" rows="4" placeholder="JavaScript&#10;Python&#10;Gestion de projet"></textarea>
+            <p class="aide">Une compétence par ligne.</p>
+          </fieldset>
+
+          <fieldset class="carte">
+            <legend>Langues</legend>
+            <div id="liste-langues"></div>
+            <button type="button" class="btn btn-add" data-ajout="langue">+ Ajouter une langue</button>
+          </fieldset>
+
+          <fieldset class="carte">
+            <legend>Certifications & Centres d'intérêt</legend>
+            <label>Certifications
+              <textarea id="certifications" rows="3" placeholder="AWS Certified Developer — 2023"></textarea>
+            </label>
+            <label>Centres d'intérêt
+              <textarea id="interets" rows="3" placeholder="Photographie&#10;Course à pied"></textarea>
+            </label>
+          </fieldset>
+
+          <div class="actions-finales">
+            <button type="button" class="btn btn-or btn-grand" id="btn-pdf">
+              ⬇ Télécharger mon CV en PDF (sur mon ordinateur)
+            </button>
+            <p class="aide" id="pdf-info">
+              🔒 Le PDF est généré dans votre navigateur. Aucune donnée n'est conservée sur nos serveurs.
+            </p>
+          </div>
+        </div>
+
+        <!-- ----- APERÇU CV ----- -->
+        <div class="apercu-col">
+          <div class="apercu-tete">
+            <span>Aperçu en direct</span>
+            <span class="badge-modele" id="badge-modele">Modèle 1 — Classique</span>
+          </div>
+          <div class="apercu-cadre">
+            <iframe id="apercu" title="Aperçu du CV"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LETTRE DE MOTIVATION ============ -->
+<section class="builder lettre-builder" id="lettre">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Module lettre</span>
+      <h2>Créez votre lettre de motivation</h2>
+      <p>Choisissez un style, remplissez les informations, téléchargez votre lettre en PDF sur votre ordinateur.</p>
+    </div>
+
+    <!-- ÉTAPE 1 : MODÈLES DE LETTRES -->
+    <div class="bloc-etape">
+      <h3 class="etape-titre"><span>1</span> Choisissez votre modèle</h3>
+      <div class="grille-modeles" id="grille-lettres"></div>
+    </div>
+
+    <!-- ÉTAPE 2 : FORMULAIRE + APERÇU -->
+    <div class="bloc-etape">
+      <h3 class="etape-titre"><span>2</span> Remplissez votre lettre</h3>
+
+      <div class="atelier">
+        <!-- ----- FORMULAIRE LETTRE ----- -->
+        <div class="formulaire">
+
+          <fieldset class="carte">
+            <legend>Vos coordonnées</legend>
+            <div class="grille-2">
+              <label>Prénom *
+                <input type="text" data-champ-l="prenom" placeholder="Amadou"/>
+              </label>
+              <label>Nom *
+                <input type="text" data-champ-l="nom" placeholder="Diallo"/>
+              </label>
+              <label class="large">Adresse
+                <input type="text" data-champ-l="adresse" placeholder="12 rue de la Paix"/>
+              </label>
+              <label>Code postal
+                <input type="text" data-champ-l="code_postal" placeholder="75002"/>
+              </label>
+              <label>Ville
+                <input type="text" data-champ-l="ville" placeholder="Paris"/>
+              </label>
+              <label>Email
+                <input type="email" data-champ-l="email" placeholder="amadou@mail.com"/>
+              </label>
+              <label>Téléphone
+                <input type="tel" data-champ-l="telephone" placeholder="+33 6 12 34 56 78"/>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="carte">
+            <legend>Destinataire (entreprise)</legend>
+            <div class="grille-2">
+              <label class="large">Nom de l'entreprise *
+                <input type="text" data-champ-l="entreprise" placeholder="TechCorp SAS"/>
+              </label>
+              <label class="large">Adresse de l'entreprise
+                <input type="text" data-champ-l="entreprise_adresse" placeholder="5 avenue des Champs"/>
+              </label>
+              <label>Code postal
+                <input type="text" data-champ-l="entreprise_cp" placeholder="75008"/>
+              </label>
+              <label>Ville
+                <input type="text" data-champ-l="entreprise_ville" placeholder="Paris"/>
+              </label>
+              <label class="large">Nom du destinataire (optionnel)
+                <input type="text" data-champ-l="destinataire" placeholder="Monsieur le Directeur des Ressources Humaines"/>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="carte">
+            <legend>Objet et date</legend>
+            <div class="grille-2">
+              <label>Date
+                <span class="date-champ">
+                  <input type="date" data-champ-l="date_lettre"/>
+                  <button type="button" class="date-toggle" title="Saisie manuelle">📅</button>
+                </span>
+              </label>
+              <label>Lieu
+                <input type="text" data-champ-l="lieu_lettre" placeholder="Paris"/>
+              </label>
+              <label class="large">Poste visé *
+                <input type="text" data-champ-l="poste" placeholder="Développeur Web Full-Stack"/>
+              </label>
+              <label class="large">Référence de l'offre (optionnel)
+                <input type="text" data-champ-l="reference" placeholder="Réf. DEV-2025-042"/>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="carte">
+            <legend>Contenu de la lettre</legend>
+            <label>Formule d'appel
+              <input type="text" data-champ-l="appel" placeholder="Madame, Monsieur,"/>
+            </label>
+            <label>Paragraphe 1 — Accroche *
+              <textarea data-champ-l="para1" rows="4" placeholder="Actuellement à la recherche d'un nouveau défi professionnel..."></textarea>
+            </label>
+            <label>Paragraphe 2 — Motivations / compétences
+              <textarea data-champ-l="para2" rows="4" placeholder="Fort de 5 années d'expérience..."></textarea>
+            </label>
+            <label>Paragraphe 3 — Adéquation avec l'entreprise
+              <textarea data-champ-l="para3" rows="4" placeholder="Votre entreprise, reconnue pour..."></textarea>
+            </label>
+            <label>Paragraphe 4 — Conclusion / demande d'entretien
+              <textarea data-champ-l="para4" rows="3" placeholder="Je me tiens à votre disposition..."></textarea>
+            </label>
+            <label>Formule de politesse
+              <input type="text" data-champ-l="politesse" placeholder="Veuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées."/>
+            </label>
+            <label>Signature (nom affiché en bas)
+              <input type="text" data-champ-l="signature" placeholder="Amadou Diallo"/>
+            </label>
+          </fieldset>
+
+          <div class="actions-finales">
+            <button type="button" class="btn btn-or btn-grand" id="btn-pdf-lettre">
+              ⬇ Télécharger ma lettre en PDF (sur mon ordinateur)
+            </button>
+            <p class="aide">
+              🔒 La lettre est générée dans votre navigateur. Aucune donnée n'est conservée sur nos serveurs.
+            </p>
+          </div>
+        </div>
+
+        <!-- ----- APERÇU LETTRE ----- -->
+        <div class="apercu-col">
+          <div class="apercu-tete">
+            <span>Aperçu en direct</span>
+            <span class="badge-modele" id="badge-lettre">Modèle 1 — Formelle</span>
+          </div>
+          <div class="apercu-cadre">
+            <iframe id="apercu-lettre" title="Aperçu de la lettre"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION PREMIUM ============ -->
+<section class="premium-sec" id="premium">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">💎 Offre Premium</span>
+      <h2>Passez à CVPro Premium</h2>
+      <p>Débloquez tous les modèles, retirez le filigrane et créez des CV d'exception.</p>
+    </div>
+
+    <div class="premium-presentation">
+      <div class="premium-avantages">
+        <div class="avantage">
+          <span class="av-ico">✨</span>
+          <div>
+            <b>Sans filigrane</b>
+            <p>Vos CV sont 100 % propres, sans aucune marque CVPro</p>
+          </div>
+        </div>
+        <div class="avantage">
+          <span class="av-ico">💎</span>
+          <div>
+            <b>3 modèles Exclusifs</b>
+            <p>Executive, Luxe et Signature — des designs premium</p>
+          </div>
+        </div>
+        <div class="avantage">
+          <span class="av-ico">🚀</span>
+          <div>
+            <b>Accès à vie</b>
+            <p>Un seul paiement, pas d'abonnement, mises à jour incluses</p>
+          </div>
+        </div>
+        <div class="avantage">
+          <span class="av-ico">📄</span>
+          <div>
+            <b>Lettres illimitées</b>
+            <p>Créez autant de lettres que vous voulez</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="premium-carte-prix">
+        <div class="prix-ancien">2 €</div>
+        <div class="prix-actuel">1,50 €</div>
+        <div class="prix-note">Paiement unique — Offre de lancement</div>
+        <button type="button" class="btn-premium-acheter" id="btn-payer-premium">
+          💳 Payer 1,50 € — Débloquer
+        </button>
+        <button type="button" class="btn-premium-code" id="btn-code-premium">
+          🎟️ J'ai un code
+        </button>
+        <p class="premium-footer">
+          🔒 Paiement sécurisé Stripe · Remboursement 30 jours
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SERVICES À VENIR ============ -->
+<section class="soon-sec" id="soon">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Prochainement</span>
+      <h2>Nos prochains modules</h2>
+      <p>Nous travaillons activement sur ces nouvelles fonctionnalités.</p>
+    </div>
+    <div class="grille-soon">
+      <article class="carte-soon">
+        <div class="ico">🏢</div>
+        <h3>Espace Recruteur</h3>
+        <p>Publiez des offres et consultez les candidatures directement.</p>
+        <span class="tag">Bientôt</span>
+      </article>
+      <article class="carte-soon">
+        <div class="ico">🤖</div>
+        <h3>Assistant IA</h3>
+        <p>Rédaction automatique de votre profil et de vos descriptions de poste.</p>
+        <span class="tag">Bientôt</span>
+      </article>
+      <article class="carte-soon">
+        <div class="ico">📊</div>
+        <h3>Suivi de candidatures</h3>
+        <p>Gérez toutes vos candidatures et relances au même endroit.</p>
+        <span class="tag">Bientôt</span>
+      </article>
+      <article class="carte-soon">
+        <div class="ico">🌍</div>
+        <h3>CV multilingues</h3>
+        <p>Traduction automatique de vos CV en plusieurs langues.</p>
+        <span class="tag">Bientôt</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="pied">
+  <div class="wrap pied-in">
+    <div>
+      <a href="#accueil" class="logo">CV<span>Pro</span></a>
+      <p>Le générateur de CV simple, rapide et professionnel.</p>
+    </div>
+    <div>
+      <h4>Navigation</h4>
+      <a href="#accueil">Accueil</a>
+      <a href="#creer">Créer mon CV</a>
+      <a href="#lettre">Lettres de motivation</a>
+      <a href="#modeles">Modèles</a>
+      <a href="#premium">Premium</a>
+    </div>
+    <div>
+      <h4>Bientôt</h4>
+      <a href="#" class="soon" data-soon="Espace Recruteur">Espace Pro</a>
+      <a href="#" class="soon" data-soon="Assistant IA">Assistant IA</a>
+      <a href="#" class="soon" data-soon="API développeurs">API développeurs</a>
+    </div>
+  </div>
+  <div class="wrap pied-bas">
+    <span>© <span id="annee"></span> CVPro — Tous droits réservés.</span>
+  </div>
+</footer>
+
+<!-- ============ MODALE GÉNÉRIQUE ============ -->
+<div class="modale" id="modale">
+  <div class="modale-boite">
+    <button class="modale-x" id="modale-x">×</button>
+    <div class="modale-ico">🚧</div>
+    <h3 id="modale-titre">Bientôt disponible</h3>
+    <p id="modale-texte">Cette section est en cours de développement.</p>
+    <button class="btn btn-or" id="modale-ok">Compris</button>
+  </div>
+</div>
+
+<!-- ============ MODALE PREMIUM ============ -->
+<div class="modale-premium" id="modale-premium">
+  <div class="premium-boite">
+    <button class="modale-x" id="premium-x">×</button>
+
+    <div class="premium-header">
+      <div class="premium-couronne">👑</div>
+      <h2>Passez à <span>CVPro Premium</span></h2>
+      <p class="premium-sous-titre">
+        Débloquez tous les modèles, retirez le filigrane et créez des CV d'exception.
+      </p>
+    </div>
+
+    <div class="premium-avantages">
+      <div class="avantage">
+        <span class="av-ico">✨</span>
+        <div>
+          <b>Sans filigrane</b>
+          <p>Vos CV sont 100 % propres, sans aucune marque CVPro</p>
+        </div>
+      </div>
+      <div class="avantage">
+        <span class="av-ico">💎</span>
+        <div>
+          <b>3 modèles Exclusifs</b>
+          <p>Executive, Luxe et Signature — des designs premium</p>
+        </div>
+      </div>
+      <div class="avantage">
+        <span class="av-ico">🚀</span>
+        <div>
+          <b>Accès à vie</b>
+          <p>Un seul paiement, pas d'abonnement, mises à jour incluses</p>
+        </div>
+      </div>
+      <div class="avantage">
+        <span class="av-ico">📄</span>
+        <div>
+          <b>Lettres illimitées</b>
+          <p>Créez autant de lettres que vous voulez</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="premium-prix">
+      <div class="prix-ancien">14,99 €</div>
+      <div class="prix-actuel">4,99 €</div>
+      <div class="prix-note">Paiement unique — Offre de lancement</div>
+    </div>
+
+    <div class="premium-actions">
+      <button type="button" class="btn-premium-acheter" id="btn-payer">
+        💳 Payer 4,99 € — Paiement sécurisé Stripe
+      </button>
+      <button type="button" class="btn-premium-code" id="btn-code">
+        🎟️ J'ai un code
+      </button>
+    </div>
+
+    <div class="premium-code-zone" id="premium-code-zone" style="display:none;">
+      <input type="text" id="premium-code-input"
+             placeholder="Entrez votre code (ex: PREMIUM2025)" />
+      <button type="button" class="btn-activer" id="btn-activer-code">
+        Activer
+      </button>
+    </div>
+
+    <p class="premium-footer">
+      🔒 Paiement sécurisé par Stripe · Remboursement 30 jours · Support par email
+    </p>
+  </div>
+</div>
+
+<!-- ============ BARRE DE SAUVEGARDE ============ -->
+<div id="sauvegarde-barre" class="sauvegarde-barre">
+  <span class="sauvegarde-ico" id="sauvegarde-ico">💾</span>
+  <span class="sauvegarde-texte" id="sauvegarde-texte">
+    Sauvegarde automatique activée
+  </span>
+  <button type="button" class="sauvegarde-btn" id="btn-effacer-brouillon">
+    🗑 Effacer le brouillon
+  </button>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast"></div>
+
+<!-- ============ BIBLIOTHÈQUES PDF ============ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {  font-family: {{ data.police|default("'Georgia', serif")|safe }}; font-size:13px; color:#222; background:#fff; padding:20mm; line-height:1.65; }
+  .head { text-align:center; padding-bottom:18px; border-bottom:1px solid {{ data.couleur }}; margin-bottom:22px; }
+  .head h1 { font-size:26px; color:{{ data.couleur }}; margin-bottom:4px; }
+  .head .titre { font-size:14px; font-style:italic; color:#555; }
+  .head .contact { font-size:11px; color:#7f8c8d; margin-top:10px; }
+  .head .contact span { margin:0 10px; }
+  .head .photo { width:80px; height:80px; border-radius:50%; object-fit:cover; display:block; margin:0 auto 12px; }
+  h2 { font-size:14px; font-variant:small-caps; letter-spacing:1px; color:{{ data.couleur }}; border-bottom:1px solid #ddd; padding-bottom:4px; margin:22px 0 12px; page-break-after:avoid; }
+  h2::before { content: counter(sec) ". "; counter-increment: sec; color:{{ data.couleur }}; }
+  body { counter-reset: sec; }
+  .item { margin-bottom:14px; page-break-inside:avoid; }
+  .item .ligne { display:flex; justify-content:space-between; }
+  .item .titre-item { font-weight:bold; font-size:13px; }
+  .item .date { font-style:italic; color:#666; font-size:12px; }
+  .item .sous-titre { font-size:12px; font-style:italic; color:#555; }
+  .item .desc { font-size:12px; margin-top:4px; text-align:justify; }
+  .competences { columns:2; column-gap:30px; }
+  .competences div { font-size:12px; margin-bottom:4px; }
+  .langues { display:flex; gap:26px; flex-wrap:wrap; }
+  .langues div { font-size:12px; }
+  .langues b { color:{{ data.couleur }}; }
+</style>
+</head>
+<body>
+<div class="head">
+  {% if data.photo %}<img src="{{ data.photo }}" class="photo">{% endif %}
+  <h1>{{ data.prenom }} {{ data.nom }}</h1>
+  <div class="titre">{{ data.titre }}</div>
+  <div class="contact">
+    {% if data.email %}<span>{{ data.email }}</span>{% endif %}
+    {% if data.telephone %}<span>{{ data.telephone }}</span>{% endif %}
+    {% if data.ville %}<span>{{ data.code_postal }} {{ data.ville }}</span>{% endif %}
+  </div>
+</div>
+
+{% if data.profil %}<h2>Présentation</h2><p style="text-align:justify;">{{ data.profil }}</p>{% endif %}
+
+{% if data.formations %}<h2>Formation</h2>
+{% for form in data.formations %}<div class="item">
+  <div class="ligne"><span class="titre-item">{{ form.diplome }}</span><span class="date">{{ form.debut|format_date }} - {{ form.fin|format_date }}</span></div>
+  <div class="sous-titre">{{ form.etablissement }}{% if form.lieu %}, {{ form.lieu }}{% endif %}</div>
+  {% if form.description %}<div class="desc">{{ form.description }}</div>{% endif %}
+</div>{% endfor %}{% endif %}
+
+{% if data.experiences %}<h2>Expérience professionnelle</h2>
+{% for exp in data.experiences %}<div class="item">
+  <div class="ligne"><span class="titre-item">{{ exp.poste }}</span><span class="date">{{ exp.debut|format_date }} - {{ exp.fin|format_date }}</span></div>
+  <div class="sous-titre">{{ exp.entreprise }}{% if exp.lieu %}, {{ exp.lieu }}{% endif %}</div>
+  {% if exp.description %}<div class="desc">{{ exp.description }}</div>{% endif %}
+</div>{% endfor %}{% endif %}
+
+{% if data.competences %}<h2>Compétences</h2><div class="competences">{% for c in data.competences %}<div>· {{ c }}</div>{% endfor %}</div>{% endif %}
+{% if data.langues %}<h2>Langues</h2><div class="langues">{% for l in data.langues %}<div><b>{{ l.langue }}</b> — {{ l.niveau }}</div>{% endfor %}</div>{% endif %}
+{% if data.certifications %}<h2>Certifications</h2><ul style="margin-left:22px;">{% for c in data.certifications %}<li>{{ c }}</li>{% endfor %}</ul>{% endif %}
+{% if data.interets %}<h2>Centres d'intérêt</h2><p>{{ data.interets|join(' · ') }}</p>{% endif %}
+</body>
+</html>

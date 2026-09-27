@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mes CV — CVPro</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body data-connecte="true"
+      data-premium="{{ 'true' if current_user.premium else 'false' }}">
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo">CV<span>Pro</span></a>
+    <nav class="menu">
+      <a href="/">Accueil</a>
+      <a href="/mon-compte">👤 Mon compte</a>
+      <a href="/mes-cv" class="actif">📂 Mes CV</a>
+      <a href="/logout" class="btn-mini">Déconnexion</a>
+    </nav>
+  </div>
+</header>
+
+<main class="contenu" style="padding: 40px 0;">
+  <div class="wrap">
+
+    <!-- EN-TÊTE DE PAGE -->
+    <div class="page-head">
+      <div>
+        <h1 class="page-titre">📂 Mes CV sauvegardés</h1>
+        <p class="page-sous-titre">
+          Retrouvez et modifiez tous vos CV à tout moment, depuis n'importe quel appareil.
+        </p>
+      </div>
+      <a href="/#creer" class="btn-nouveau-cv">
+        + Créer un nouveau CV
+      </a>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-cv" id="stats-cv">
+      <div class="stat-cv">
+        <span class="stat-cv-ico">📄</span>
+        <div>
+          <div class="stat-cv-val" id="stat-total">—</div>
+          <div class="stat-cv-lbl">CV sauvegardés</div>
+        </div>
+      </div>
+      <div class="stat-cv">
+        <span class="stat-cv-ico">📅</span>
+        <div>
+          <div class="stat-cv-val" id="stat-dernier">—</div>
+          <div class="stat-cv-lbl">Dernière modification</div>
+        </div>
+      </div>
+      <div class="stat-cv">
+        <span class="stat-cv-ico">{{ '👑' if current_user.premium else '🎁' }}</span>
+        <div>
+          <div class="stat-cv-val" id="stat-statut">
+            {{ 'Premium' if current_user.premium else 'Gratuit' }}
+          </div>
+          <div class="stat-cv-lbl">
+            {% if current_user.premium %}
+              Illimité
+            {% else %}
+              3 CV maximum
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BARRE D'OUTILS -->
+    <div class="toolbar-cv">
+      <div class="recherche-cv">
+        <span class="recherche-ico">🔍</span>
+        <input type="text" id="recherche-cv" placeholder="Rechercher un CV par titre..."/>
+      </div>
+      <select id="tri-cv" class="select-cv">
+        <option value="recent">Plus récents</option>
+        <option value="ancien">Plus anciens</option>
+        <option value="titre">Titre (A → Z)</option>
+      </select>
+    </div>
+
+    <!-- LISTE DES CV -->
+    <div id="liste-cv" class="liste-cv">
+      <div class="chargement-cv">
+        <div class="spinner"></div>
+        <p>Chargement de vos CV...</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODALE DE SAUVEGARDE -->
+<div class="modale" id="modale-sauvegarde">
+  <div class="modale-boite modale-sauvegarde">
+    <button class="modale-x" id="modale-sauv-x">×</button>
+    <div class="modale-ico">💾</div>
+    <h3 id="modale-sauv-titre">Sauvegarder ce CV</h3>
+    <p>Donnez un nom à votre CV pour le retrouver facilement.</p>
+    <input type="text" id="input-titre-cv" placeholder="Ex : CV Développeur Senior" maxlength="150"/>
+    <div class="modale-actions">
+      <button type="button" class="btn-annuler" id="btn-annuler-sauv">Annuler</button>
+      <button type="button" class="btn-or" id="btn-confirmer-sauv">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE LIMITE ATTEINTE -->
+<div class="modale" id="modale-limite">
+  <div class="modale-boite">
+    <button class="modale-x" id="modale-limite-x">×</button>
+    <div class="modale-ico">⚠️</div>
+    <h3>Limite atteinte</h3>
+    <p>
+      Vous avez atteint la limite de <b>3 CV sauvegardés</b> pour le compte gratuit.
+      Passez à <b>CVPro Premium</b> pour en sauvegarder autant que vous voulez.
+    </p>
+    <a href="/#premium" class="btn-or" style="display:block;padding:14px;border-radius:10px;text-decoration:none;color:#fff;text-align:center;font-weight:700;">
+      💎 Passer Premium — 4,99 €
+    </a>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mes_cv.js') }}"></script>
+</body>
+</html>
