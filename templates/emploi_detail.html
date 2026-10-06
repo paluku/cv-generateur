@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>{{ offre.titre }} — CVPro</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+<style>
+  .detail-container { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+
+  .btn-retour {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #64748b; text-decoration: none; font-weight: 600;
+    font-size: .9rem; margin-bottom: 20px; transition: all .2s;
+  }
+  .btn-retour:hover { color: #f39c12; }
+
+  .detail-card {
+    background: #fff; border-radius: 18px; padding: 32px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.06);
+    border: 1px solid #e8ecf0;
+  }
+
+  .detail-header {
+    border-bottom: 1px solid #e8ecf0; padding-bottom: 20px;
+    margin-bottom: 24px;
+  }
+  .detail-titre {
+    font-size: 1.6rem; font-weight: 800; color: #2c3e50;
+    line-height: 1.3; margin-bottom: 10px;
+  }
+  .detail-entreprise {
+    color: #64748b; font-size: 1rem; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .detail-badges {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .badge {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: .8rem; font-weight: 700;
+  }
+  .badge-contrat { background: #fef3c7; color: #92400e; }
+  .badge-lieu { background: #ecfdf5; color: #166534; }
+  .badge-salaire { background: #dbeafe; color: #1e40af; }
+  .badge-date { background: #f3e8ff; color: #7c3aed; }
+
+  .detail-section {
+    margin-bottom: 24px;
+  }
+  .detail-section h3 {
+    color: #2c3e50; font-size: 1rem; font-weight: 700;
+    margin-bottom: 12px; text-transform: uppercase;
+    letter-spacing: 1px; font-size: .85rem;
+  }
+  .detail-description {
+    color: #475569; font-size: .95rem; line-height: 1.7;
+    background: #f9fbfc; padding: 20px;
+    border-radius: 12px; border-left: 4px solid #f39c12;
+    white-space: pre-wrap;
+  }
+
+  .detail-actions {
+    display: flex; gap: 12px; margin-top: 30px;
+    padding-top: 24px; border-top: 1px solid #e8ecf0;
+    flex-wrap: wrap;
+  }
+  .btn-postuler-adzuna {
+    background: linear-gradient(135deg, #7c3aed, #f39c12);
+    color: #fff; padding: 16px 32px;
+    border-radius: 12px; text-decoration: none;
+    font-weight: 700; font-size: 1rem;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: all .2s;
+    box-shadow: 0 6px 20px rgba(124,58,237,.3);
+  }
+  .btn-postuler-adzuna:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(124,58,237,.5);
+  }
+  .btn-retour-liste {
+    background: transparent; color: #64748b;
+    border: 2px solid #cbd5e1; padding: 14px 28px;
+    border-radius: 12px; text-decoration: none;
+    font-weight: 600; font-size: .95rem;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: all .2s;
+  }
+  .btn-retour-liste:hover {
+    border-color: #f39c12; color: #f39c12;
+  }
+
+  .info-box {
+    background: #eff6ff; border-left: 3px solid #3b82f6;
+    padding: 14px 18px; border-radius: 10px;
+    margin-top: 20px; font-size: .85rem; color: #1e40af;
+  }
+</style>
+</head>
+<body data-connecte="true">
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo">CV<span>Pro</span></a>
+    <nav class="menu">
+      <a href="/">Accueil</a>
+      <a href="/emplois">💼 Emplois</a>
+      <a href="/mes-cv">📂 Mes CV</a>
+      <a href="/logout" class="btn-mini">Déconnexion</a>
+    </nav>
+  </div>
+</header>
+
+<main class="detail-container">
+  <a href="/emplois" class="btn-retour">← Retour aux offres</a>
+
+  <div class="detail-card">
+    <div class="detail-header">
+      <h1 class="detail-titre">{{ offre.titre }}</h1>
+
+      <div class="detail-entreprise">
+        🏢 <b>{{ offre.entreprise }}</b>
+      </div>
+
+      <div class="detail-badges">
+        {% if offre.type_contrat %}
+          <span class="badge badge-contrat">{{ offre.type_contrat }}</span>
+        {% endif %}
+        {% if offre.lieu %}
+          <span class="badge badge-lieu">📍 {{ offre.lieu }}</span>
+        {% endif %}
+        {% if offre.salaire and offre.salaire != 'Non précisé' %}
+          <span class="badge badge-salaire">💰 {{ offre.salaire }}</span>
+        {% endif %}
+        {% if offre.date_creation %}
+          <span class="badge badge-date">📅 {{ offre.date_creation }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if offre.description %}
+    <div class="detail-section">
+      <h3>📋 Description du poste</h3>
+      <div class="detail-description">{{ offre.description }}</div>
+    </div>
+    {% endif %}
+
+    {% if offre.competences %}
+    <div class="detail-section">
+      <h3>🎯 Compétences demandées</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        {% for c in offre.competences %}
+          <span style="background:#f4f6f9;padding:6px 14px;border-radius:20px;font-size:.85rem;color:#34495e;">
+            {{ c }}
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="detail-actions">
+      <a href="{{ offre.url }}" target="_blank" class="btn-postuler-adzuna">
+        📄 Postuler sur Adzuna →
+      </a>
+      <a href="/emplois" class="btn-retour-liste">
+        ← Retour à la liste
+      </a>
+    </div>
+
+    <div class="info-box">
+      ℹ️ Cette offre provient d'Adzuna. Vous serez redirigé vers leur site pour postuler.
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

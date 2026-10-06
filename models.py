@@ -62,5 +62,207 @@ class CV(db.Model):
         if complet:
             base['donnees'] = json.loads(self.donnees_json)
             base['photo'] = self.photo
-        return base        
+        return base 
+
+class Candidature(db.Model):
+    __tablename__ = 'candidatures'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    cv_id = db.Column(db.Integer, db.ForeignKey('cvs.id'), nullable=True)
+
+    # Info sur l'offre
+    offre_id = db.Column(db.String(100))
+    offre_titre = db.Column(db.String(255))
+    offre_entreprise = db.Column(db.String(255))
+    offre_lieu = db.Column(db.String(255))
+    offre_url = db.Column(db.Text)
+
+    # Contenu
+    message = db.Column(db.Text)
+    email_employeur = db.Column(db.String(150))
+
+    # Statut
+    statut = db.Column(db.String(30), default='envoyee')
+
+    # PDF en base64 (stockage temporaire ou définitif)
+    pdf_base64 = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    auteur = db.relationship('User', backref=db.backref('candidatures',
+                                                         lazy=True,
+                                                         cascade='all, delete-orphan'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'offre_titre': self.offre_titre,
+            'offre_entreprise': self.offre_entreprise,
+            'offre_lieu': self.offre_lieu,
+            'offre_url': self.offre_url,
+            'statut': self.statut,
+            'date': self.created_at.strftime('%d/%m/%Y à %H:%M') if self.created_at else '',
+        }        
+    
+    
+    
+class AlerteEmploi(db.Model):
+    __tablename__ = 'alertes_emploi'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    mots_cles = db.Column(db.String(200), nullable=False)
+    ville = db.Column(db.String(100))
+    source = db.Column(db.String(30), default='adzuna')
+    frequence = db.Column(db.String(20), default='quotidienne')
+    active = db.Column(db.Boolean, default=True)
+    derniere_envoi = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    auteur = db.relationship(
+        'User',
+        backref=db.backref('alertes_emploi', lazy=True, cascade='all, delete-orphan')
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'mots_cles': self.mots_cles,
+            'ville': self.ville or '',
+            'source': self.source,
+            'frequence': self.frequence,
+            'active': self.active,
+            'derniere_envoi': self.derniere_envoi.strftime('%d/%m/%Y') if self.derniere_envoi else 'Jamais',
+            'created_at': self.created_at.strftime('%d/%m/%Y') if self.created_at else '',
+        }
         
+        
+
+# ================================================================
+# RELEVÉ D'HEURES
+# ================================================================
+
+class Pointage(db.Model):
+    __tablename__ = 'pointages'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id'),
+        nullable=False,
+        index=True
+    )
+
+    date = db.Column(
+        db.Date,
+        nullable=False,
+        index=True
+    )
+
+    total_minutes = db.Column(
+        db.Integer,
+        nullable=False,
+        default=480
+    )
+
+    heure_debut = db.Column(
+        db.String(5),
+        nullable=False,
+        default='08:00'
+    )
+
+    heure_fin = db.Column(
+        db.String(5),
+        nullable=False,
+        default='17:00'
+    )
+
+    pause_minutes = db.Column(
+        db.Integer,
+        nullable=False,
+        default=60
+    )
+
+    statut = db.Column(
+        db.String(20),
+        nullable=False,
+        default='travail'
+    )
+
+    commentaire = db.Column(
+        db.Text
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            'user_id',
+            'date',
+            name='uq_pointage_user_date'
+        ),
+    )
+
+
+# ================================================================
+# RÉGLAGES DU RELEVÉ D'HEURES
+# ================================================================
+
+class ReleveHeuresSettings(db.Model):
+    __tablename__ = 'releve_heures_settings'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id'),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    duree_defaut_minutes = db.Column(
+        db.Integer,
+        nullable=False,
+        default=480
+    )
+
+    pause_defaut_minutes = db.Column(
+        db.Integer,
+        nullable=False,
+        default=60
+    )
+
+    heure_debut_defaut = db.Column(
+        db.String(5),
+        nullable=False,
+        default='08:00'
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )

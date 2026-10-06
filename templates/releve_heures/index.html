@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <title>CVPro — Relevé d'heures</title>
+
+
+</head>
+
+<body data-connecte="{{ 'true' if current_user.is_authenticated else 'false' }}">
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header class="topbar">
+    <div class="wrap">
+
+        <a href="{{ url_for('main.index') }}" class="logo">
+            CV<span>Pro</span>
+        </a>
+
+        <nav class="main-nav">
+
+            <a href="{{ url_for('main.index') }}">
+                Accueil
+            </a>
+
+            <a href="{{ url_for('premium.mon_compte') if false else '#' }}">
+                Mon compte
+            </a>
+
+            <a href="{{ url_for('releve_heures.index') }}"
+               class="active">
+                Relevé d'heures
+            </a>
+
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('auth.logout') }}">
+                    Déconnexion
+                </a>
+            {% endif %}
+
+        </nav>
+
+    </div>
+</header>
+
+
+<!-- =========================================================
+     CONTENU
+========================================================= -->
+
+<main class="releve-container">
+
+    <!-- En-tête -->
+
+    <section class="releve-header">
+
+        <div>
+            <span class="releve-badge">
+                Gestion du temps
+            </span>
+
+            <h1>
+                Relevé d'heures
+            </h1>
+
+            <p>
+                Gérez vos journées de travail, absences et congés
+                directement depuis votre calendrier.
+            </p>
+        </div>
+
+        <div class="releve-header-actions">
+
+            <a href="{{ url_for('releve_heures.settings') }}"
+               class="btn btn-secondary">
+                ⚙️ Paramètres
+            </a>
+
+            <a href="{{ url_for('releve_heures.export_pdf', annee=annee, mois=mois) }}"
+               class="btn btn-primary"
+               target="_blank">
+                📄 Exporter PDF
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         MESSAGES FLASH
+    ====================================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+            <div class="flash-container">
+
+                {% for category, message in messages %}
+
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- =====================================================
+         PARAMÈTRES ACTUELS
+    ====================================================== -->
+
+    <section class="settings-summary">
+
+        <div class="settings-summary-item">
+
+            <span class="settings-icon">
+                ⏱️
+            </span>
+
+            <div>
+                <small>Durée par défaut</small>
+
+                <strong>
+                    {{ reglages.duree_defaut_minutes // 60 }}h{{ '%02d'|format(reglages.duree_defaut_minutes % 60) }}
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="settings-summary-item">
+
+            <span class="settings-icon">
+                ☕
+            </span>
+
+            <div>
+                <small>Pause</small>
+
+                <strong>
+                    {{ reglages.pause_defaut_minutes }} min
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="settings-summary-item">
+
+            <span class="settings-icon">
+                🕗
+            </span>
+
+            <div>
+                <small>Début habituel</small>
+
+                <strong>
+                    {{ reglages.heure_debut_defaut }}
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         NAVIGATION DU MOIS
+    ====================================================== -->
+
+    <section class="month-navigation">
+
+        <a href="{{ url_for('releve_heures.index', month=mois_precedent) }}"
+           class="month-nav-btn"
+           aria-label="Mois précédent">
+            ‹
+        </a>
+
+        <div class="month-title">
+
+            <h2>
+                {{ nom_mois }}
+            </h2>
+
+            <span>
+                {{ annee }}
+            </span>
+
+        </div>
+
+        <a href="{{ url_for('releve_heures.index', month=mois_suivant) }}"
+           class="month-nav-btn"
+           aria-label="Mois suivant">
+            ›
+        </a>
+
+    </section>
+
+
+    <!-- =====================================================
+         LÉGENDE
+    ====================================================== -->
+
+    <section class="calendar-legend">
+
+        <div class="legend-item">
+            <span class="legend-color legend-travail"></span>
+            <span>Travail</span>
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-color legend-absence"></span>
+            <span>Absence</span>
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-color legend-modifie"></span>
+            <span>Modifié</span>
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-color legend-conge"></span>
+            <span>Congé</span>
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-color legend-vide"></span>
+            <span>Libre</span>
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         CALENDRIER
+    ====================================================== -->
+
+    <section class="calendar-card">
+
+        <div class="calendar-weekdays">
+
+            <div>Lun</div>
+            <div>Mar</div>
+            <div>Mer</div>
+            <div>Jeu</div>
+            <div>Ven</div>
+            <div>Sam</div>
+            <div>Dim</div>
+
+        </div>
+
+
+        <div class="calendar-grid">
+
+            {% for _ in range(decalage) %}
+
+                <div class="calendar-day empty-before"></div>
+
+            {% endfor %}
+
+
+            {% for jour in range(1, nombre_jours + 1) %}
+
+                {% set date_str = '%04d-%02d-%02d'|format(annee, mois, jour) %}
+                {% set pointage = pointages_par_date.get(date_str) %}
+                {% set aujourd_hui =
+                    date_str == aujourd_hui.strftime('%Y-%m-%d')
+                %}
+
+                <div
+                    class="calendar-day
+                    {% if aujourd_hui %}today{% endif %}
+                    {% if pointage %}has-status status-{{ pointage.statut }}{% endif %}"
+                    data-date="{{ date_str }}"
+                    data-statut="{{ pointage.statut if pointage else 'vide' }}"
+                    onclick="gererClicJour(this)"
+                    oncontextmenu="ouvrirModification(event, this)"
+                >
+
+                    <div class="day-number">
+                        {{ jour }}
+                    </div>
+
+
+                    {% if pointage %}
+
+                        {% if pointage.statut == 'travail' %}
+
+                            <div class="day-status">
+                                <span class="status-icon">✓</span>
+                                <span>Travail</span>
+                            </div>
+
+                            <div class="day-hours">
+                                {{ pointage.total_minutes // 60 }}h{{ '%02d'|format(pointage.total_minutes % 60) }}
+                            </div>
+
+
+                        {% elif pointage.statut == 'modifie' %}
+
+                            <div class="day-status">
+                                <span class="status-icon">✎</span>
+                                <span>Modifié</span>
+                            </div>
+
+                            <div class="day-hours">
+                                {{ pointage.total_minutes // 60 }}h{{ '%02d'|format(pointage.total_minutes % 60) }}
+                            </div>
+
+
+                        {% elif pointage.statut == 'absence' %}
+
+                            <div class="day-status">
+                                <span class="status-icon">×</span>
+                                <span>Absence</span>
+                            </div>
+
+
+                        {% elif pointage.statut == 'conge' %}
+
+                            <div class="day-status">
+                                <span class="status-icon">★</span>
+                                <span>Congé</span>
+                            </div>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <div class="day-status day-empty">
+                            +
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         AIDE CALENDRIER
+    ====================================================== -->
+
+    <section class="calendar-help">
+
+        <div class="help-item">
+
+            <span class="help-icon">
+                👆
+            </span>
+
+            <div>
+                <strong>Clic</strong>
+                <span>
+                    Travail → Absence → Libre
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="help-item">
+
+            <span class="help-icon">
+                🖱️
+            </span>
+
+            <div>
+                <strong>Clic droit</strong>
+                <span>
+                    Modifier la journée
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="help-item">
+
+            <span class="help-icon">
+                📱
+            </span>
+
+            <div>
+                <strong>Appui long</strong>
+                <span>
+                    Modifier sur mobile
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         STATISTIQUES DU MOIS
+    ====================================================== -->
+
+    <section class="stats-section">
+
+        <div class="section-heading">
+
+            <div>
+                <span class="section-kicker">
+                    Bilan mensuel
+                </span>
+
+                <h2>
+                    Résumé de {{ nom_mois }}
+                </h2>
+            </div>
+
+        </div>
+
+
+        <div class="stats-grid">
+
+            <!-- Heures -->
+
+            <div class="stat-card stat-hours">
+
+                <div class="stat-icon">
+                    ⏱️
+                </div>
+
+                <div class="stat-content">
+
+                    <span>
+                        Heures travaillées
+                    </span>
+
+                    <strong>
+                        {{ total_minutes // 60 }}h{{ '%02d'|format(total_minutes % 60) }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Jours -->
+
+            <div class="stat-card stat-days">
+
+                <div class="stat-icon">
+                    📅
+                </div>
+
+                <div class="stat-content">
+
+                    <span>
+                        Jours travaillés
+                    </span>
+
+                    <strong>
+                        {{ total_jours }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Absences -->
+
+            <div class="stat-card stat-absence">
+
+                <div class="stat-icon">
+                    ❌
+                </div>
+
+                <div class="stat-content">
+
+                    <span>
+                        Absences
+                    </span>
+
+                    <strong>
+                        {{ total_absences }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Congés -->
+
+            <div class="stat-card stat-leave">
+
+                <div class="stat-icon">
+                    🌴
+                </div>
+
+                <div class="stat-content">
+
+                    <span>
+                        Congés
+                    </span>
+
+                    <strong>
+                        {{ total_conges }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         EXPORT
+    ====================================================== -->
+
+    <section class="export-card">
+
+        <div class="export-content">
+
+            <div class="export-icon">
+                📄
+            </div>
+
+            <div>
+
+                <h2>
+                    Exporter votre relevé
+                </h2>
+
+                <p>
+                    Générez un relevé d'heures PDF propre et professionnel
+                    pour votre archivage ou votre employeur.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="export-actions">
+
+            <a
+                href="{{ url_for('releve_heures.export_pdf', annee=annee, mois=mois) }}"
+                class="btn btn-primary"
+                target="_blank"
+            >
+                📄 Télécharger le PDF
+            </a>
+
+            <a
+                href="{{ url_for('releve_heures.envoyer_email', annee=annee, mois=mois) }}"
+                class="btn btn-secondary"
+            >
+                ✉️ Envoyer par email
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         INSTRUCTIONS
+    ====================================================== -->
+
+    <section class="instructions-card">
+
+        <h2>
+            Comment utiliser le relevé ?
+        </h2>
+
+        <div class="instructions-grid">
+
+            <div class="instruction">
+
+                <span class="instruction-number">
+                    1
+                </span>
+
+                <div>
+                    <strong>
+                        Enregistrer une journée
+                    </strong>
+
+                    <p>
+                        Cliquez sur une journée vide pour enregistrer
+                        automatiquement votre journée de travail.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="instruction">
+
+                <span class="instruction-number">
+                    2
+                </span>
+
+                <div>
+                    <strong>
+                        Signaler une absence
+                    </strong>
+
+                    <p>
+                        Cliquez à nouveau sur une journée travaillée
+                        pour la passer en absence.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="instruction">
+
+                <span class="instruction-number">
+                    3
+                </span>
+
+                <div>
+                    <strong>
+                        Modifier une journée
+                    </strong>
+
+                    <p>
+                        Faites un clic droit ou un appui long pour
+                        modifier les horaires, la pause ou le statut.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="instruction">
+
+                <span class="instruction-number">
+                    4
+                </span>
+
+                <div>
+                    <strong>
+                        Exporter
+                    </strong>
+
+                    <p>
+                        Utilisez l'export PDF pour conserver ou transmettre
+                        votre relevé mensuel.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =========================================================
+     MODAL / MESSAGE
+========================================================= -->
+
+<div id="releve-modal"
+     class="releve-modal"
+     aria-hidden="true">
+
+    <div class="releve-modal-overlay"
+         onclick="fermerModal()">
+    </div>
+
+    <div class="releve-modal-content">
+
+        <button
+            type="button"
+            class="modal-close"
+            onclick="fermerModal()"
+            aria-label="Fermer">
+            ×
+        </button>
+
+        <div id="modal-body"></div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+const URL_TOGGLE =
+    "{{ url_for('releve_heures.toggle_pointage', date_pointage='DATE_PLACEHOLDER') }}";
+
+const URL_MODIFIER =
+    "{{ url_for('releve_heures.modifier_pointage', date_pointage='DATE_PLACEHOLDER') }}";
+
+
+/*
+ * ============================================================
+ * CLIC SUR UNE JOURNÉE
+ * ============================================================
+ */
+
+function gererClicJour(element) {
+
+    const date = element.dataset.date;
+
+    if (!date) {
+        return;
+    }
+
+    envoyerToggle(date);
+}
+
+
+/*
+ * ============================================================
+ * TOGGLE
+ * ============================================================
+ */
+
+function envoyerToggle(date) {
+
+    const url = URL_TOGGLE.replace(
+        'DATE_PLACEHOLDER',
+        date
+    );
+
+    fetch(url, {
+        method: 'POST',
+
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+
+        credentials: 'same-origin'
+
+    })
+
+    .then(response => {
+
+        if (!response.ok) {
+            throw new Error(
+                'Erreur HTTP ' + response.status
+            );
+        }
+
+        return response.json();
+
+    })
+
+    .then(data => {
+
+        if (data.success) {
+
+            window.location.reload();
+
+        } else {
+
+            afficherErreur(
+                data.error || 'Une erreur est survenue.'
+            );
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        afficherErreur(
+            'Impossible de modifier cette journée.'
+        );
+
+    });
+
+}
+
+
+/*
+ * ============================================================
+ * CLIC DROIT
+ * ============================================================
+ */
+
+function ouvrirModification(event, element) {
+
+    event.preventDefault();
+
+    const date = element.dataset.date;
+
+    if (!date) {
+        return false;
+    }
+
+    const url = URL_MODIFIER.replace(
+        'DATE_PLACEHOLDER',
+        date
+    );
+
+    window.location.href = url;
+
+    return false;
+}
+
+
+/*
+ * ============================================================
+ * APPUI LONG MOBILE
+ * ============================================================
+ */
+
+let timerAppuiLong = null;
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        const jours =
+            document.querySelectorAll(
+                '.calendar-day[data-date]'
+            );
+
+        jours.forEach(function (jour) {
+
+            jour.addEventListener(
+                'touchstart',
+                function () {
+
+                    const date =
+                        this.dataset.date;
+
+                    timerAppuiLong =
+                        setTimeout(
+                            function () {
+
+                                const url =
+                                    URL_MODIFIER.replace(
+                                        'DATE_PLACEHOLDER',
+                                        date
+                                    );
+
+                                window.location.href =
+                                    url;
+
+                            },
+                            650
+                        );
+
+                },
+                {
+                    passive: true
+                }
+            );
+
+
+            jour.addEventListener(
+                'touchend',
+                function () {
+
+                    clearTimeout(
+                        timerAppuiLong
+                    );
+
+                }
+            );
+
+
+            jour.addEventListener(
+                'touchmove',
+                function () {
+
+                    clearTimeout(
+                        timerAppuiLong
+                    );
+
+                }
+            );
+
+        });
+
+    }
+);
+
+
+/*
+ * ============================================================
+ * MODAL
+ * ============================================================
+ */
+
+function afficherErreur(message) {
+
+    const modal =
+        document.getElementById(
+            'releve-modal'
+        );
+
+    const body =
+        document.getElementById(
+            'modal-body'
+        );
+
+    body.innerHTML = `
+        <div class="modal-error">
+            <div class="modal-error-icon">⚠️</div>
+
+            <h3>Une erreur est survenue</h3>
+
+            <p>${echapperHtml(message)}</p>
+
+            <button
+                type="button"
+                class="btn btn-primary"
+                onclick="fermerModal()">
+                Fermer
+            </button>
+        </div>
+    `;
+
+    modal.classList.add('open');
+    modal.setAttribute(
+        'aria-hidden',
+        'false'
+    );
+}
+
+
+function fermerModal() {
+
+    const modal =
+        document.getElementById(
+            'releve-modal'
+        );
+
+    modal.classList.remove('open');
+
+    modal.setAttribute(
+        'aria-hidden',
+        'true'
+    );
+
+}
+
+
+function echapperHtml(value) {
+
+    const div =
+        document.createElement('div');
+
+    div.textContent =
+        value;
+
+    return div.innerHTML;
+}
+
+
+/*
+ * ============================================================
+ * ÉCHAPPEMENT CLAVIER
+ * ============================================================
+ */
+
+document.addEventListener(
+    'keydown',
+    function (event) {
+
+        if (event.key === 'Escape') {
+            fermerModal();
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>

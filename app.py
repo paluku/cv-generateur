@@ -12,9 +12,12 @@ from itsdangerous import URLSafeTimedSerializer
 
 from config import Config
 from extensions import db, login_manager, mail
-from models import User, CV
+from models import User, CV,Pointage,ReleveHeuresSettings
 from filters import register_filters
 from blueprints.admin_db import admin_db_bp
+from blueprints.emploi import emploi_bp
+from blueprints.alertes import alertes_bp
+from blueprints.releve_heures import releve_heures_bp
 
 # ================================================================
 # FACTORY
@@ -69,7 +72,9 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(password_reset_bp)
     app.register_blueprint(admin_db_bp)
-
+    app.register_blueprint(emploi_bp)
+    app.register_blueprint(alertes_bp)
+    app.register_blueprint(releve_heures_bp)
     # ================================================================
     # ⭐ ROUTE /mes-cv — PAGE HTML
     # ================================================================

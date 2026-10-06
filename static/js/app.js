@@ -11,6 +11,7 @@ let utilisateurPremium = false;
 let utilisateurConnecte = false;
 let timerSauvegardeAuto = null;
 let dernierSauvegardeReussie = null;
+let offreDetailEnCours = null;
 const CLE_BROUILLON = 'cvpro_brouillon_v1';
 
 
@@ -1091,7 +1092,141 @@ function fermerModale() {
   document.getElementById('modale')?.classList.remove('ouverte');
 }
 
+// ==================== SAUVEGARDE CV EN BASE ====================
 
+
+
+function ouvrirModaleSauvegarde() {
+  console.log('🔵 Ouverture de la modale de sauvegarde');
+
+  const modale = document.getElementById('modale-sauvegarde');
+  if (!modale) {
+    console.error('❌ Modale #modale-sauvegarde introuvable dans le HTML');
+    alert('Erreur : la modale de sauvegarde n\'existe pas. Vérifiez index.html');
+    return;
+  }
+
+  const input = document.getElementById('input-titre-cv');
+  if (input) {
+    // Suggestion automatique
+    const nom = document.querySelector('[data-champ="nom"]')?.value.trim() || '';
+    const prenom = document.querySelector('[data-champ="prenom"]')?.value.trim() || '';
+    const titrePoste = document.querySelector('[data-champ="titre"]')?.value.trim() || '';
+
+    if (prenom && nom) {
+      input.value = `CV ${prenom} ${nom}${titrePoste ? ' — ' + titrePoste : ''}`;
+    } else {
+      input.value = '';
+    }
+    setTimeout(() => { input.focus(); input.select(); }, 100);
+  }
+
+  modale.classList.add('ouverte');
+}
+
+
+function fermerModaleSauvegarde() {
+  document.getElementById('modale-sauvegarde')?.classList.remove('ouverte');
+}
+
+
+async function confirmerSauvegarde() {
+  console.log('🔵 Tentative de sauvegarde');
+
+  const input = document.getElementById('input-titre-cv');
+  const titre = (input?.value || '').trim();
+
+  if (!titre) {
+    afficherToast('⚠️ Entrez un titre pour ce CV');
+    input?.focus();
+    return;
+  }
+
+  // Récupérer les données du formulaire
+  const data = collecterDonnees();
+  if (!data.nom && !data.prenom) {
+    afficherToast('⚠️ Remplissez au moins le nom ou prénom');
+    return;
+  }
+
+  const payload = {
+    cv_id: cvEnCoursId,
+    titre: titre,
+    modele: modeleActif,
+    donnees: data,
+    photo: photoData,
+    couleur: data.couleur_perso || '#f39c12',
+  };
+
+  const btn = document.getElementById('btn-confirmer-sauv');
+  const texteOrig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Sauvegarde...';
+
+  try {
+    const res = await fetch('/api/mes-cv', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      cvEnCoursId = json.cv_id;
+      fermerModaleSauvegarde();
+      afficherToast(json.action === 'created'
+        ? '✅ CV sauvegardé !'
+        : '✅ CV mis à jour !');
+    } else if (json.limite_atteinte) {
+      fermerModaleSauvegarde();
+      alert('⚠️ Limite de 3 CV atteinte.\n\nPassez à CVPro Premium pour en sauvegarder plus.');
+    } else {
+      afficherToast('❌ ' + (json.error || 'Erreur'));
+    }
+  } catch (e) {
+    console.error('Erreur sauvegarde', e);
+    afficherToast('❌ Erreur de connexion');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = texteOrig;
+  }
+}
+
+
+// ==================== ÉCOUTEURS ====================
+document.addEventListener('DOMContentLoaded', () => {
+  // Bouton "Sauvegarder ce CV"
+  document.getElementById('btn-sauvegarder-cv')
+    ?.addEventListener('click', ouvrirModaleSauvegarde);
+
+  // Fermer modale
+  document.getElementById('modale-sauv-x')
+    ?.addEventListener('click', fermerModaleSauvegarde);
+
+  document.getElementById('btn-annuler-sauv')
+    ?.addEventListener('click', fermerModaleSauvegarde);
+
+  // Confirmer
+  document.getElementById('btn-confirmer-sauv')
+    ?.addEventListener('click', confirmerSauvegarde);
+
+  // Entrée
+  document.getElementById('input-titre-cv')
+    ?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmerSauvegarde();
+    });
+
+  // Clic en dehors
+  document.getElementById('modale-sauvegarde')
+    ?.addEventListener('click', (e) => {
+      if (e.target.id === 'modale-sauvegarde') fermerModaleSauvegarde();
+    });
+
+  // Échap
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') fermerModaleSauvegarde();
+  });
+});
 // ==================== TOAST ====================
 function afficherToast(msg) {
   const t = document.getElementById('toast');
@@ -1100,3 +1235,94 @@ function afficherToast(msg) {
   t.classList.add('visible');
   setTimeout(() => t.classList.remove('visible'), 3000);
 }
+
+// ==================== MODALE DÉTAIL ====================
+
+
+function ouvrirModaleDetail(index) {
+  const offres = window.offresActuelles || [];
+  const offre = offres[index];
+  if (!offre) return;
+
+  offreDetailEnCours = offre;
+
+  const contenu = document.getElementById('detail-contenu');
+
+  // Construire les badges
+  let badges = '';
+  if (offre.type_contrat) {
+    badges += `<span class="badge-detail badge-contrat">${escapeHtml(offre.type_contrat)}</span>`;
+  }
+  if (offre.lieu) {
+    badges += `<span class="badge-detail badge-lieu">📍 ${escapeHtml(offre.lieu)}</span>`;
+  }
+  if (offre.salaire && offre.salaire !== 'Non précisé') {
+    badges += `<span class="badge-detail badge-salaire">💰 ${escapeHtml(offre.salaire)}</span>`;
+  }
+  if (offre.date_creation) {
+    badges += `<span class="badge-detail badge-date">📅 ${escapeHtml(offre.date_creation)}</span>`;
+  }
+
+  // Compétences
+  let compHtml = '';
+  if (offre.competences && offre.competences.length > 0) {
+    compHtml = `
+      <div class="detail-section">
+        <h4>🎯 Compétences demandées</h4>
+        <div class="detail-tags">
+          ${offre.competences.map(c => `<span>${escapeHtml(c)}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  contenu.innerHTML = `
+    <h2 class="detail-titre">${escapeHtml(offre.titre)}</h2>
+    <p class="detail-entreprise">🏢 <b>${escapeHtml(offre.entreprise)}</b></p>
+    <div class="detail-badges">${badges}</div>
+
+    ${offre.description ? `
+      <div class="detail-section">
+        <h4>📋 Description du poste</h4>
+        <div class="detail-description">${escapeHtml(offre.description)}</div>
+      </div>
+    ` : ''}
+
+    ${compHtml}
+  `;
+
+  // Configurer le lien externe
+  const lienExterne = document.getElementById('detail-lien-externe');
+  if (lienExterne) {
+    lienExterne.href = offre.url || '#';
+  }
+
+  // Ouvrir
+  document.getElementById('modale-detail').classList.add('ouverte');
+}
+
+function fermerModaleDetail() {
+  document.getElementById('modale-detail').classList.remove('ouverte');
+}
+
+function postulerDepuisDetail() {
+  // Trouver l'index de l'offre dans la liste
+  const offres = window.offresActuelles || [];
+  const index = offres.findIndex(o => o.id === offreDetailEnCours.id);
+
+  fermerModaleDetail();
+
+  if (index >= 0) {
+    ouvrirModalePostuler(index);
+  }
+}
+
+// Fermer avec Échap
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') fermerModaleDetail();
+});
+
+// Clic en dehors
+document.getElementById('modale-detail')?.addEventListener('click', (e) => {
+  if (e.target.id === 'modale-detail') fermerModaleDetail();
+});

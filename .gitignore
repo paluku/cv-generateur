@@ -213,4 +213,14 @@ docker-compose.override.yml
 # ================================================================
 # FIN DU .gitignore
 # ================================================================
-visiteurs.json
+# Fichiers sensibles - NE PAS COMMITER
+identifiants_cv_generateur.anpe.json
+*.anpe.json
+.env
+*.key
+*.secret
+
+# Fichiers sensibles
+identifiants_cv_generateur.anpe.json
+*.anpe.json
+.env

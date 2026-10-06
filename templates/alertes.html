@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mes alertes emploi — CVPro</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+<style>
+  .alertes-container { max-width: 800px; margin: 0 auto; padding: 30px 20px; }
+  .alertes-header { margin-bottom: 30px; }
+  .alertes-header h1 { color: #2c3e50; margin-bottom: 8px; }
+  .alertes-header p { color: #64748b; }
+
+  .form-alerte {
+    background: #fff; border-radius: 16px; padding: 24px;
+    border: 1px solid #e8ecf0; margin-bottom: 24px;
+  }
+  .form-alerte h3 { color: #2c3e50; margin-bottom: 16px; font-size: 1.1rem; }
+  .form-alerte label {
+    display: block; font-size: .85rem; font-weight: 600;
+    color: #34495e; margin-bottom: 6px;
+  }
+  .form-alerte input, .form-alerte select {
+    width: 100%; padding: 12px; border: 1px solid #d5dbdb;
+    border-radius: 10px; font-family: inherit; font-size: .95rem;
+    margin-bottom: 14px;
+  }
+  .form-alerte input:focus, .form-alerte select:focus {
+    outline: none; border-color: #f39c12;
+    box-shadow: 0 0 0 3px rgba(243,156,18,.15);
+  }
+  .form-alerte .row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  .form-alerte button {
+    background: linear-gradient(135deg, #7c3aed, #f39c12);
+    color: #fff; border: none; padding: 14px 24px;
+    border-radius: 12px; font-weight: 700; cursor: pointer;
+    font-family: inherit; font-size: .95rem; width: 100%;
+    transition: all .2s;
+  }
+  .form-alerte button:hover { transform: translateY(-2px); }
+
+  .alerte-card {
+    background: #fff; border: 1px solid #e8ecf0;
+    border-radius: 14px; padding: 18px; margin-bottom: 12px;
+    display: flex; justify-content: space-between;
+    align-items: center; gap: 16px;
+  }
+  .alerte-card.inactive { opacity: .5; }
+  .alerte-info h4 { color: #2c3e50; margin-bottom: 4px; font-size: 1rem; }
+  .alerte-info p { color: #64748b; font-size: .85rem; margin-bottom: 4px; }
+  .alerte-info .meta { color: #94a3b8; font-size: .75rem; }
+  .alerte-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .btn-toggle, .btn-suppr, .btn-test {
+    padding: 8px 12px; border-radius: 8px; border: none;
+    cursor: pointer; font-family: inherit; font-size: .8rem;
+    font-weight: 600; transition: all .2s;
+  }
+  .btn-toggle { background: #f4f6f9; color: #64748b; }
+  .btn-toggle.on { background: #ecfdf5; color: #22c55e; }
+  .btn-suppr { background: #fef2f2; color: #dc2626; }
+  .btn-test { background: #eff6ff; color: #3b82f6; }
+  .vide { text-align: center; padding: 40px; color: #94a3b8; }
+</style>
+</head>
+<body data-connecte="true">
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo">CV<span>Pro</span></a>
+    <nav class="menu">
+      <a href="/">Accueil</a>
+      <a href="/emplois">💼 Emplois</a>
+      <a href="/alertes" class="actif">🔔 Alertes</a>
+      <a href="/mes-cv">📂 Mes CV</a>
+      <a href="/logout" class="btn-mini">Déconnexion</a>
+    </nav>
+  </div>
+</header>
+
+<main class="alertes-container">
+  <div class="alertes-header">
+    <h1>🔔 Mes alertes emploi</h1>
+    <p>Recevez les nouvelles offres correspondant à vos critères par email</p>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="form-alerte">
+    <h3>➕ Créer une nouvelle alerte</h3>
+
+    <label>Mots-clés *</label>
+    <input type="text" id="alerte-mots" placeholder="Ex: développeur python, commercial..."/>
+
+    <div class="row">
+      <div>
+        <label>Ville (optionnel)</label>
+        <input type="text" id="alerte-ville" placeholder="Paris, Lyon..."/>
+      </div>
+      <div>
+        <label>Source</label>
+        <select id="alerte-source">
+          <option value="adzuna">🌍 Adzuna</option>
+          <option value="france-travail">🇫🇷 France Travail</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Fréquence</label>
+    <select id="alerte-frequence">
+      <option value="quotidienne">📅 Quotidienne</option>
+      <option value="hebdomadaire">📆 Hebdomadaire</option>
+    </select>
+
+    <button type="button" id="btn-creer-alerte">🔔 Créer l'alerte</button>
+  </div>
+
+  <!-- Liste -->
+  <h3 style="color:#2c3e50; margin-bottom:14px;">📋 Mes alertes</h3>
+  <div id="liste-alertes">
+    <div class="vide">Chargement...</div>
+  </div>
+</main>
+
+<script>
+// ==================== CHARGER LES ALERTES ====================
+async function chargerAlertes() {
+  try {
+    const res = await fetch('/api/alertes');
+    const json = await res.json();
+
+    const zone = document.getElementById('liste-alertes');
+
+    if (!json.success || json.alertes.length === 0) {
+      zone.innerHTML = `
+        <div class="vide">
+          <p>Aucune alerte pour le moment</p>
+          <p style="font-size:.85rem;">Créez-en une ci-dessus ↑</p>
+        </div>
+      `;
+      return;
+    }
+
+    zone.innerHTML = json.alertes.map(a => `
+      <div class="alerte-card ${a.active ? '' : 'inactive'}">
+        <div class="alerte-info">
+          <h4>${escapeHtml(a.mots_cles)}</h4>
+          <p>
+            ${a.ville ? `📍 ${escapeHtml(a.ville)} · ` : ''}
+            ${a.source === 'adzuna' ? '🌍 Adzuna' : '🇫🇷 France Travail'} ·
+            📅 ${a.frequence}
+          </p>
+          <div class="meta">Dernier envoi : ${a.derniere_envoi}</div>
+        </div>
+        <div class="alerte-actions">
+          <button type="button" class="btn-test" data-action="test" data-id="${a.id}" title="Envoyer maintenant pour tester">
+            📧 Test
+          </button>
+          <button type="button" class="btn-toggle ${a.active ? 'on' : ''}" data-action="toggle" data-id="${a.id}">
+            ${a.active ? '✓ Active' : '⏸ Inactive'}
+          </button>
+          <button type="button" class="btn-suppr" data-action="suppr" data-id="${a.id}">
+            🗑
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    // Brancher les boutons
+    zone.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        if (action === 'toggle') toggleAlerte(id);
+        if (action === 'suppr') supprimerAlerte(id);
+        if (action === 'test') testerAlerte(id);
+      });
+    });
+
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+
+// ==================== CRÉER ====================
+async function creerAlerte() {
+  const mots_cles = document.getElementById('alerte-mots').value.trim();
+  const ville = document.getElementById('alerte-ville').value.trim();
+  const source = document.getElementById('alerte-source').value;
+  const frequence = document.getElementById('alerte-frequence').value;
+
+  if (!mots_cles) {
+    afficherToast('⚠️ Entrez des mots-clés');
+    return;
+  }
+
+  const btn = document.getElementById('btn-creer-alerte');
+  btn.disabled = true;
+  btn.textContent = '⏳ Création...';
+
+  try {
+    const res = await fetch('/api/alertes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mots_cles, ville, source, frequence }),
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      document.getElementById('alerte-mots').value = '';
+      document.getElementById('alerte-ville').value = '';
+      afficherToast('✅ Alerte créée !');
+      chargerAlertes();
+    } else {
+      afficherToast('❌ ' + (json.error || 'Erreur'));
+    }
+  } catch (e) {
+    afficherToast('❌ Erreur');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔔 Créer l\'alerte';
+  }
+}
+
+
+// ==================== TOGGLE ====================
+async function toggleAlerte(id) {
+  try {
+    await fetch(`/api/alertes/${id}/toggle`, { method: 'POST' });
+    chargerAlertes();
+  } catch (e) { afficherToast('❌ Erreur'); }
+}
+
+
+// ==================== SUPPRIMER ====================
+async function supprimerAlerte(id) {
+  if (!confirm('Supprimer cette alerte ?')) return;
+  try {
+    await fetch(`/api/alertes/${id}`, { method: 'DELETE' });
+    afficherToast('🗑 Alerte supprimée');
+    chargerAlertes();
+  } catch (e) { afficherToast('❌ Erreur'); }
+}
+
+
+// ==================== TEST ENVOI ====================
+async function testerAlerte(id) {
+  afficherToast('⏳ Envoi de l\'email de test...');
+  try {
+    const res = await fetch(`/api/alertes/${id}/envoyer-test`, { method: 'POST' });
+    const json = await res.json();
+    if (json.success) {
+      afficherToast('✅ ' + json.message);
+      chargerAlertes();
+    } else {
+      afficherToast('❌ ' + (json.error || 'Erreur'));
+    }
+  } catch (e) { afficherToast('❌ Erreur'); }
+}
+
+
+// ==================== UTILS ====================
+function escapeHtml(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function afficherToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) { alert(msg); return; }
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 3500);
+}
+
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  chargerAlertes();
+  document.getElementById('btn-creer-alerte')
+    ?.addEventListener('click', creerAlerte);
+});
+</script>
+
+<div class="toast" id="toast"></div>
+</body>
+</html>

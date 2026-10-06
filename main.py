@@ -11,7 +11,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.enums import TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from xml.sax.saxutils import escape
-
+import uuid
+from stats_utils import marquer_visiteur_en_ligne
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
