@@ -12,12 +12,17 @@ from itsdangerous import URLSafeTimedSerializer
 
 from config import Config
 from extensions import db, login_manager, mail
-from models import User, CV,Pointage,ReleveHeuresSettings
+from models import User, CV, Pointage, ReleveHeuresSettings
 from filters import register_filters
+
+# Blueprints externes
 from blueprints.admin_db import admin_db_bp
 from blueprints.emploi import emploi_bp
 from blueprints.alertes import alertes_bp
-from blueprints.releve_heures import releve_heures_bp
+
+# Blueprint Relevé d'heures
+from releve_heures import releve_bp, init_releve_db
+
 
 # ================================================================
 # FACTORY
@@ -74,7 +79,19 @@ def create_app():
     app.register_blueprint(admin_db_bp)
     app.register_blueprint(emploi_bp)
     app.register_blueprint(alertes_bp)
-    app.register_blueprint(releve_heures_bp)
+
+    # ==================== RELEVÉ D'HEURES ====================
+    init_releve_db()
+    app.register_blueprint(releve_bp, url_prefix="/releve")
+
+    # ================================================================
+    # ⭐ ROUTE /releve-heures — PAGE HTML (autonome)
+    # ================================================================
+    @app.route('/releve-heures', strict_slashes=False)
+    def releve_heures_page():
+        """Page du relevé d'heures (autonome)."""
+        return render_template('releve_heures.html')
+
     # ================================================================
     # ⭐ ROUTE /mes-cv — PAGE HTML
     # ================================================================
@@ -319,6 +336,7 @@ if __name__ == '__main__':
     print("🔑 Mot de passe oublié : http://127.0.0.1:5000/mot-de-passe-oublie")
     print("👤 Mon compte       : http://127.0.0.1:5000/mon-compte")
     print("📂 Mes CV           : http://127.0.0.1:5000/mes-cv")
+    print("🕐 Relevé d'heures  : http://127.0.0.1:5000/releve-heures")
     print("📊 Admin            : http://127.0.0.1:5000/admin")
     print("=" * 60 + "\n")
     app.run(debug=True)
