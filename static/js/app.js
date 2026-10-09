@@ -1326,3 +1326,460 @@ document.addEventListener('keydown', (e) => {
 document.getElementById('modale-detail')?.addEventListener('click', (e) => {
   if (e.target.id === 'modale-detail') fermerModaleDetail();
 });
+
+
+
+// ==================== BANDEAU OFFRES ====================
+async function chargerBandeauEmplois() {
+  try {
+    const res = await fetch('/api/emplois/apercu');
+    const json = await res.json();
+
+    const contenu = document.getElementById('bandeau-contenu');
+    if (!contenu) return;
+
+    if (!json.success || !json.offres || json.offres.length === 0) {
+      contenu.innerHTML = `
+        <span class="bandeau-offre">
+          Aucune offre disponible pour le moment
+        </span>
+      `;
+      return;
+    }
+
+    // Construire les offres
+    let html = '';
+    json.offres.forEach(o => {
+      const titre = escapeHtml(o.titre || 'Sans titre');
+      const entreprise = escapeHtml(o.entreprise || '');
+      const lieu = escapeHtml((o.lieu || '').split(',')[0].trim());
+
+      html += `
+        <span class="bandeau-offre">
+          🔥 <b>${titre}</b>
+          ${entreprise ? ` · ${entreprise}` : ''}
+          ${lieu ? ` · 📍 ${lieu}` : ''}
+        </span>
+        <span class="bandeau-sep">•</span>
+      `;
+    });
+
+    // Dupliquer pour un défilement infini
+    contenu.innerHTML = html + html;
+
+  } catch (e) {
+    console.error('Erreur bandeau', e);
+  }
+}
+
+// Échapper le HTML (sécurité XSS)
+function escapeHtml(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Charger au démarrage
+document.addEventListener('DOMContentLoaded', () => {
+  chargerBandeauEmplois();
+  // Rafraîchir toutes les 5 minutes
+  setInterval(chargerBandeauEmplois, 300000);
+});
+
+
+
+(function(){
+  const API = '/releve';
+  const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+  const pad2 = n => String(n).padStart(2,'0');
+  const iso  = (y,m,d) => y+'-'+pad2(m+1)+'-'+pad2(d);
+  const todayIso = () => { const d=new Date(); return iso(d.getFullYear(),d.getMonth(),d.getDate()); };
+  const hToMin = t => { const [h,m]=String(t||'00:00').split(':').map(Number); return h*60+(m||0); };
+  const minToH = t => { const v=((t%1440)+1440)%1440; return pad2(Math.floor(v/60))+':'+pad2(v%60); };
+  const fmtMin = m => { const h=Math.floor(m/60), mm=m%60; return mm===0? h+'h' : h+'h'+pad2(mm); };
+  const dateLongue = k => { const [y,m,d]=k.split('-').map(Number); return pad2(d)+'/'+pad2(m)+'/'+y; };
+  const diffMinutes = (d,f) => { let x=hToMin(f)-hToMin(d); return x<0? x+1440 : x; };
+
+  let settings = { duree_defaut_minutes:480, pause_defaut_minutes:60, heure_debut_defaut:'08:00' };
+  let days = {};
+  let view = { y:0, m:0 };
+  let editingDate = null;
+
+  const $ = id => document.getElementById(id);
+  const dayOverlay      = $('releve-dayOverlay');
+  const settingsOverlay = $('releve-settingsOverlay');
+
+  /* ============ Rendu ============ */
+  function renderSettings(){
+    $('releve-setLine1').textContent = fmtMin(settings.duree_defaut_minutes) + ' / jour';
+    $('releve-setLine2').textContent = 'Pause : ' + fmtMin(settings.pause_defaut_minutes) +
+                                       ' · Début : ' + settings.heure_debut_defaut;
+  }
+
+  function renderCalendar(){
+    $('releve-monthTitle').textContent = MOIS[view.m] + ' ' + view.y;
+
+    const grid = $('releve-calendar');
+    grid.innerHTML = '';
+
+    const premier = new Date(view.y, view.m, 1);
+    const decalage = (premier.getDay() + 6) % 7;   // lundi = 0
+    const nbJours = new Date(view.y, view.m + 1, 0).getDate();
+    const today = todayIso();
+
+    for (let i = 0; i < decalage; i++){
+      const p = document.createElement('div');
+      p.className = 'cell pad';
+      grid.appendChild(p);
+    }
+
+    for (let j = 1; j <= nbJours; j++){
+      const key = iso(view.y, view.m, j);
+      const d = days[key];
+
+      const cell = document.createElement('div');
+      cell.className = 'cell'
+        + (d ? ' ' + d.statut : '')
+        + (key === today ? ' today' : '');
+      cell.dataset.date = key;
+      if (d && d.commentaire) cell.title = d.commentaire;
+
+      const num = document.createElement('div');
+      num.className = 'num';
+      num.textContent = j;
+      cell.appendChild(num);
+
+      if (d){
+        const val = document.createElement('div');
+        val.className = 'val';
+        val.textContent = d.statut === 'absence' ? 'ABS'
+                       : d.statut === 'conge'   ? 'CONGÉ'
+                       : fmtMin(d.total_minutes);
+        cell.appendChild(val);
+      }
+
+      // Clic simple : cycle vide -> travail -> absence -> vide
+      let pressTimer = null, pressFired = false;
+      cell.addEventListener('click', () => {
+        if (pressFired){ pressFired = false; return; }
+        cycle(key);
+      });
+      cell.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        pressFired = false;
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(() => { pressFired = true; openDay(key); }, 500);
+      });
+      ['pointerup','pointerleave','pointercancel'].forEach(ev =>
+        cell.addEventListener(ev, () => clearTimeout(pressTimer)));
+      cell.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        openDay(key);
+      });
+
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderSummary(){
+    let h = 0, t = 0, a = 0, c = 0;
+    Object.values(days).forEach(d => {
+      if (d.statut === 'absence') a++;
+      else if (d.statut === 'conge') c++;
+      else { t++; h += d.total_minutes; }
+    });
+    $('releve-sumHours').textContent = fmtMin(h);
+    $('releve-sumDays').textContent  = t;
+    $('releve-sumAbs').textContent   = a;
+    $('releve-sumConge').textContent = c;
+  }
+
+  function render(){ renderCalendar(); renderSummary(); }
+
+  /* ============ API ============ */
+  async function chargerSettings(){
+    try {
+      settings = await fetch(API + '/api/settings').then(r => r.json());
+      renderSettings();
+    } catch(e){ console.error('settings', e); }
+  }
+
+  async function chargerMois(){
+    const mois = view.y + '-' + pad2(view.m + 1);
+    try {
+      const liste = await fetch(API + '/api/days?month=' + mois).then(r => r.json());
+      days = {};
+      liste.forEach(d => { days[d.date] = d; });
+      render();
+    } catch(e){ console.error('mois', e); }
+  }
+
+  async function chargerTout(){ await chargerSettings(); await chargerMois(); }
+
+  function nouvelleJournee(statut){
+    const debut = hToMin(settings.heure_debut_defaut);
+    const fin   = debut + settings.duree_defaut_minutes + settings.pause_defaut_minutes;
+    return {
+      statut,
+      heure_debut: settings.heure_debut_defaut,
+      heure_fin: minToH(fin),
+      pause_minutes: settings.pause_defaut_minutes,
+      total_minutes: settings.duree_defaut_minutes,
+      commentaire: ''
+    };
+  }
+
+  async function upsertDay(key, data){
+    const res = await fetch(API + '/api/days', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(Object.assign({}, data, {date:key}))
+    });
+    days[key] = await res.json();
+    render();
+  }
+
+  async function deleteDay(key){
+    await fetch(API + '/api/days/' + key, {method:'DELETE'});
+    delete days[key];
+    render();
+  }
+
+  async function cycle(key){
+    const d = days[key];
+    if (!d) await upsertDay(key, nouvelleJournee('travail'));
+    else if (d.statut === 'travail' || d.statut === 'modifie')
+      await upsertDay(key, Object.assign({}, d, {statut:'absence', total_minutes:0}));
+    else await deleteDay(key);
+  }
+
+  /* ============ Modale journée ============ */
+  function lireDayForm(){
+    return {
+      statut: $('releve-dStatut').value,
+      heure_debut: $('releve-dHeureDebut').textContent,
+      heure_fin:   $('releve-dHeureFin').textContent,
+      pause_minutes: parseInt($('releve-dPause').value, 10) || 0,
+      commentaire: $('releve-dCommentaire').value
+    };
+  }
+
+  function majTotalDay(){
+    const f = lireDayForm();
+    const zone = $('releve-dHeuresZone');
+    if (f.statut === 'absence' || f.statut === 'conge'){
+      zone.style.opacity = '.35';
+      zone.style.pointerEvents = 'none';
+      $('releve-dTotal').textContent = '0h';
+      return;
+    }
+    zone.style.opacity = '1';
+    zone.style.pointerEvents = 'auto';
+    const m = Math.max(0, diffMinutes(f.heure_debut, f.heure_fin) - f.pause_minutes);
+    $('releve-dTotal').textContent = fmtMin(m);
+  }
+
+  async function pickTime(current){
+    return new Promise(resolve => {
+      const input = document.createElement('input');
+      input.type = 'time';
+      input.value = current;
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      input.style.pointerEvents = 'none';
+      document.body.appendChild(input);
+      input.addEventListener('change', () => { input.remove(); resolve(input.value); });
+      input.addEventListener('blur',   () => { if (input.parentNode){ input.remove(); resolve(null); } });
+      if (input.showPicker){ try { input.showPicker(); } catch(e){ input.click(); } }
+      else input.click();
+    });
+  }
+
+  function openDay(key){
+    editingDate = key;
+    const d = days[key] || nouvelleJournee('travail');
+
+    $('releve-dayTitle').textContent       = 'Journée du ' + dateLongue(key);
+    $('releve-dStatut').value               = d.statut;
+    $('releve-dHeureDebut').textContent     = d.heure_debut;
+    $('releve-dHeureFin').textContent       = d.heure_fin;
+    $('releve-dPause').value                = d.pause_minutes;
+    $('releve-dCommentaire').value          = d.commentaire || '';
+    majTotalDay();
+    dayOverlay.hidden = false;
+  }
+
+  $('releve-dStatut').addEventListener('change', majTotalDay);
+  $('releve-dPause').addEventListener('input', majTotalDay);
+  $('releve-dBtnDebut').addEventListener('click', async () => {
+    const v = await pickTime($('releve-dHeureDebut').textContent);
+    if (v){ $('releve-dHeureDebut').textContent = v; majTotalDay(); }
+  });
+  $('releve-dBtnFin').addEventListener('click', async () => {
+    const v = await pickTime($('releve-dHeureFin').textContent);
+    if (v){ $('releve-dHeureFin').textContent = v; majTotalDay(); }
+  });
+  $('releve-dAnnuler').addEventListener('click', () => dayOverlay.hidden = true);
+
+  $('releve-dEnregistrer').addEventListener('click', async () => {
+    const f = lireDayForm();
+    let statut = f.statut;
+    if (statut === 'travail' || statut === 'modifie'){
+      const total = Math.max(0, diffMinutes(f.heure_debut, f.heure_fin) - f.pause_minutes);
+      if (statut === 'travail' && total !== settings.duree_defaut_minutes) statut = 'modifie';
+      await upsertDay(editingDate, Object.assign({}, f, {statut, total_minutes: total}));
+    } else {
+      await upsertDay(editingDate, Object.assign({}, f, {statut, total_minutes: 0}));
+    }
+    dayOverlay.hidden = true;
+  });
+
+  /* ============ Modale réglages ============ */
+  function majSliderLabel(){
+    const v = parseInt($('releve-sDuree').value, 10);
+    $('releve-sDureeLabel').textContent = fmtMin(v);
+  }
+  $('releve-sDuree').addEventListener('input', majSliderLabel);
+
+  function ouvrirReglages(){
+    $('releve-sDuree').value = settings.duree_defaut_minutes;
+    $('releve-sPause').value = String(settings.pause_defaut_minutes);
+    $('releve-sHeureDebut').textContent = settings.heure_debut_defaut;
+    majSliderLabel();
+    settingsOverlay.hidden = false;
+  }
+  $('releve-btnSettings').addEventListener('click', ouvrirReglages);
+  $('releve-btnSettings2').addEventListener('click', ouvrirReglages);
+
+  $('releve-sBtnDebut').addEventListener('click', async () => {
+    const v = await pickTime($('releve-sHeureDebut').textContent);
+    if (v) $('releve-sHeureDebut').textContent = v;
+  });
+
+  $('releve-sAnnuler').addEventListener('click', () => settingsOverlay.hidden = true);
+
+  $('releve-sEnregistrer').addEventListener('click', async () => {
+    const payload = {
+      duree_defaut_minutes: parseInt($('releve-sDuree').value, 10),
+      pause_defaut_minutes: parseInt($('releve-sPause').value, 10),
+      heure_debut_defaut:   $('releve-sHeureDebut').textContent
+    };
+    const res = await fetch(API + '/api/settings', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    settings = await res.json();
+    renderSettings();
+    settingsOverlay.hidden = true;
+  });
+
+  /* Fermer les modales */
+  [dayOverlay, settingsOverlay].forEach(ov => {
+    ov.addEventListener('click', e => { if (e.target === ov) ov.hidden = true; });
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape'){
+      dayOverlay.hidden = true;
+      settingsOverlay.hidden = true;
+    }
+  });
+
+  /* ============ Navigation mois ============ */
+  $('releve-prevMonth').addEventListener('click', async () => {
+    view.m--; if (view.m < 0){ view.m = 11; view.y--; }
+    await chargerMois();
+  });
+  $('releve-nextMonth').addEventListener('click', async () => {
+    view.m++; if (view.m > 11){ view.m = 0; view.y++; }
+    await chargerMois();
+  });
+  $('releve-todayBtn').addEventListener('click', async () => {
+    const n = new Date();
+    view.y = n.getFullYear(); view.m = n.getMonth();
+    await chargerMois();
+  });
+
+  /* ============ Actions ============ */
+  function afficherStatut(msg, type){
+    const el = $('releveActionStatus');
+    el.textContent = msg;
+    el.className = 'action-status ' + (type || 'info');
+    el.hidden = false;
+    clearTimeout(afficherStatut._t);
+    afficherStatut._t = setTimeout(() => { el.hidden = true; }, 4000);
+  }
+
+  $('btnPdf').addEventListener('click', e => {
+    e.preventDefault();
+    window.open(API + '/export/pdf/' + view.y + '/' + (view.m + 1), '_blank');
+    afficherStatut('📄 PDF ouvert — Ctrl+P pour enregistrer', 'info');
+  });
+
+  $('btnEmail').addEventListener('click', () => {
+    const moisNom = MOIS[view.m] + ' ' + view.y;
+    const lignes = [
+      'Bonjour,', '',
+      `Voici mon relevé d'heures pour ${moisNom} :`, '',
+      `• Heures travaillées : ${$('releve-sumHours').textContent}`,
+      `• Jours travaillés : ${$('releve-sumDays').textContent}`,
+      `• Absences : ${$('releve-sumAbs').textContent}`,
+      `• Congés : ${$('releve-sumConge').textContent}`,
+      '', 'Détail par jour :'
+    ];
+    const prefix = view.y + '-' + pad2(view.m + 1) + '-';
+    Object.values(days)
+      .filter(d => d.date.startsWith(prefix))
+      .sort((a,b) => a.date.localeCompare(b.date))
+      .forEach(d => {
+        const total = d.statut === 'absence' ? 'ABS'
+                    : d.statut === 'conge'   ? 'CONGÉ'
+                    : fmtMin(d.total_minutes);
+        const comm = d.commentaire ? ' — ' + d.commentaire : '';
+        lignes.push(`  ${dateLongue(d.date)} : ${d.statut} (${total})${comm}`);
+      });
+    lignes.push('', 'Cordialement.');
+    const sujet = encodeURIComponent(`Relevé d'heures — ${moisNom}`);
+    const corps = encodeURIComponent(lignes.join('\n'));
+    window.location.href = `mailto:?subject=${sujet}&body=${corps}`;
+    afficherStatut('📧 Votre client mail va s\'ouvrir', 'info');
+  });
+
+  $('btnSave').addEventListener('click', async () => {
+    try {
+      const res = await fetch(API + '/export/json');
+      if (!res.ok) throw new Error('Erreur serveur');
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'releve_backup.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+      afficherStatut('💾 Sauvegarde téléchargée', 'ok');
+    } catch (err) {
+      afficherStatut('❌ ' + err.message, 'err');
+    }
+  });
+
+  /* ============ Démarrage ============ */
+  (function boot(){
+    const n = new Date();
+    view.y = n.getFullYear();
+    view.m = n.getMonth();
+    chargerTout();
+  })();
+
+})();
+
+
+
+
+
+
+
+
