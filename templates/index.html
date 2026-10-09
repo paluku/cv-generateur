@@ -61,19 +61,7 @@
 <!-- ============ FEUILLE DE STYLE ============ -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
 
-<!-- ============ STYLES MINIMES POUR LA FAQ (nouvelles sections) ============ -->
-<style>
-  .lien-evitement{position:absolute;left:-9999px;top:0;background:#f39c12;color:#fff;padding:10px 16px;z-index:9999;border-radius:0 0 6px 0}
-  .lien-evitement:focus{left:0}
-  .faq-liste{max-width:820px;margin:0 auto;display:grid;gap:12px}
-  .faq-item{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:0 18px}
-  .faq-item summary{cursor:pointer;font-weight:600;padding:16px 0;list-style:none;position:relative;padding-right:28px}
-  .faq-item summary::-webkit-details-marker{display:none}
-  .faq-item summary::after{content:"+";position:absolute;right:0;top:14px;font-size:1.3rem;color:#f39c12;transition:transform .2s}
-  .faq-item[open] summary::after{content:"–"}
-  .faq-item p{padding-bottom:16px;margin:0;line-height:1.6}
-  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-</style>
+
 
 <!-- ============ DONNÉES STRUCTURÉES : APPLICATION ============ -->
 <script type="application/ld+json">
@@ -219,7 +207,7 @@
       <a href="#modeles">Modèles</a>
       <a href="#premium" class="lien-premium">💎 Premium</a>
       <a href="/emplois">💼 Emplois</a>
-      <a href="/releve-heures">🕐 Interim</a>
+      <a href="#releve">🕐interim </a>
       {% if current_user.is_authenticated %}
         <!-- ⭐ CONNECTÉ -->
         <a href="/mes-cv" class="lien-mes-cv">📂 Mes CV</a>
@@ -622,6 +610,238 @@
   </div>
 </section>
 
+<!-- ============================================================
+     SECTION : RELEVÉ D'HEURES
+ 
+ ============================================================ -->
+
+
+
+
+
+
+<section id="releve"  class="wrap section releve-section">
+
+
+  <div class="layout">
+
+
+
+
+    <!-- ═══════════ COLONNE GAUCHE — CALENDRIER ═══════════ -->
+    <div class="col-left">
+<h1>🕐 Relevé d'heures</h1>
+  <button class="icon-btn" id="releve-btnSettings" title="Réglages">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+      <path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.03 7.03 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.65 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88L2.77 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.4.3.6.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.63-.94l2.39.96c.22.08.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.56ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z"/>
+    </svg>
+  </button>
+      <!-- Carte réglages -->
+      <div class="card settings-card">
+        <div class="settings-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2ZM12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67Z"/>
+          </svg>
+        </div>
+        <div class="settings-info">
+          <div class="settings-title">Réglage par défaut</div>
+          <div class="settings-line"><strong id="releve-setLine1">8h / jour</strong></div>
+          <div class="settings-line" id="releve-setLine2">Pause : 1h · Début : 08:00</div>
+        </div>
+        <button class="btn-text" id="releve-btnSettings2">Modifier</button>
+      </div>
+
+      <!-- Navigation mois -->
+      <div class="month-header">
+        <button class="nav-btn" id="releve-prevMonth" aria-label="Mois précédent">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <div class="month-title" id="releve-monthTitle">—</div>
+        <button class="nav-btn" id="releve-nextMonth" aria-label="Mois suivant">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </button>
+        <button class="nav-btn" id="releve-todayBtn" aria-label="Aujourd'hui">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm0 16H5V9h14v10ZM7 11h5v5H7z"/></svg>
+        </button>
+      </div>
+
+      <!-- Légende -->
+      <div class="legend">
+        <span><i style="background:#4CAF50"></i>Travail</span>
+        <span><i style="background:#F44336"></i>Absence</span>
+        <span><i style="background:#FF9800"></i>Modifié</span>
+        <span><i style="background:#2196F3"></i>Congé</span>
+        <span><i style="background:#fff;border:1px solid #cbd5e1"></i>Vide</span>
+      </div>
+
+      <!-- Calendrier -->
+      <div class="card cal-card">
+        <div class="weekdays">
+          <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+        </div>
+        <div class="grid" id="releve-calendar"></div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════ COLONNE DROITE — RÉSUMÉ + ACTIONS ═══════════ -->
+    <aside class="col-right">
+
+      <!-- Résumé -->
+      <div class="card summary-card">
+        <h3 class="side-title">Résumé du mois</h3>
+
+        <div class="summary-row">
+          <span class="label">Heures travaillées</span>
+          <span class="value" id="releve-sumHours">0h</span>
+        </div>
+        <hr>
+        <div class="summary-row">
+          <span class="label">Jours travaillés</span>
+          <span class="value" id="releve-sumDays">0</span>
+        </div>
+        <hr>
+        <div class="summary-row">
+          <span class="label">Absences</span>
+          <span class="value" id="releve-sumAbs">0</span>
+        </div>
+        <hr>
+        <div class="summary-row">
+          <span class="label">Congés</span>
+          <span class="value" id="releve-sumConge">0</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="card actions-card">
+        <h3 class="side-title">Actions</h3>
+
+        <a id="btnPdf" href="#" class="action-btn action-pdf">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M5 20h14v-2H5v2zm7-18L5.33 8.67l1.41 1.41L11 5.83V16h2V5.83l4.26 4.25 1.41-1.41L12 2z"/>
+          </svg>
+          <span>📄 Télécharger en PDF</span>
+        </a>
+
+        <button id="btnEmail" type="button" class="action-btn action-email">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>
+          </svg>
+          <span>📧 Envoyer par email</span>
+        </button>
+
+        <button id="btnSave" type="button" class="action-btn action-save">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/>
+          </svg>
+          <span>💾 Sauvegarde</span>
+        </button>
+
+        <div id="releveActionStatus" class="action-status" hidden></div>
+      </div>
+
+    </aside>
+
+  </div>
+
+
+<!-- ============================================================
+     MODALE JOURNÉE
+     ============================================================ -->
+<div class="overlay" id="releve-dayOverlay" hidden>
+  <div class="dialog">
+    <div class="dialog-title" id="releve-dayTitle">Journée</div>
+    <div class="dialog-content">
+      <div class="field">
+        <label>Statut</label>
+        <select id="releve-dStatut">
+          <option value="travail">🟢 Travail</option>
+          <option value="absence">🔴 Absence</option>
+          <option value="conge">🔵 Congé</option>
+          <option value="modifie">🟠 Modifié</option>
+        </select>
+      </div>
+
+      <div id="releve-dHeuresZone">
+        <div class="row2" style="margin-bottom:14px">
+          <button type="button" class="btn-outline" id="releve-dBtnDebut">
+            Début<span class="sub" id="releve-dHeureDebut">08:00</span>
+          </button>
+          <button type="button" class="btn-outline" id="releve-dBtnFin">
+            Fin<span class="sub" id="releve-dHeureFin">17:00</span>
+          </button>
+        </div>
+
+        <div class="field">
+          <label>Pause en minutes</label>
+          <input type="number" id="releve-dPause" min="0" step="5" value="60">
+        </div>
+
+        <div class="total-box">
+          <span class="label">Total de la journée</span>
+          <span class="value" id="releve-dTotal">8h</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Commentaire</label>
+        <textarea id="releve-dCommentaire" rows="3" placeholder="Optionnel"></textarea>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn-text" id="releve-dAnnuler">Annuler</button>
+      <button class="btn-filled" id="releve-dEnregistrer">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODALE RÉGLAGES
+     ============================================================ -->
+<div class="overlay" id="releve-settingsOverlay" hidden>
+  <div class="dialog">
+    <div class="dialog-title">Réglages des heures</div>
+    <div class="dialog-content">
+
+      <div class="slider-row">
+        <div class="slider-top">
+          <span>Durée par jour : <span id="releve-sDureeLabel">8h</span></span>
+          <small>1h – 12h</small>
+        </div>
+        <input type="range" id="releve-sDuree" min="60" max="720" step="15" value="480">
+      </div>
+
+      <div class="field">
+        <label>Pause habituelle</label>
+        <select id="releve-sPause">
+          <option value="0">0 min</option>
+          <option value="15">15 min</option>
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">1 h</option>
+          <option value="90">1 h 30</option>
+          <option value="120">2 h</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn-outline" id="releve-sBtnDebut" style="width:100%">
+        Début habituel : <strong id="releve-sHeureDebut">08:00</strong>
+      </button>
+
+    </div>
+    <div class="dialog-actions">
+      <button class="btn-text" id="releve-sAnnuler">Annuler</button>
+      <button class="btn-filled" id="releve-sEnregistrer">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+
+
+
+
 <!-- ============ SECTION PREMIUM ============ -->
 <section class="premium-sec" id="premium" aria-labelledby="titre-premium">
   <div class="wrap">
@@ -908,64 +1128,7 @@
 
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
-<script>
-// ==================== BANDEAU OFFRES ====================
-async function chargerBandeauEmplois() {
-  try {
-    const res = await fetch('/api/emplois/apercu');
-    const json = await res.json();
 
-    const contenu = document.getElementById('bandeau-contenu');
-    if (!contenu) return;
 
-    if (!json.success || !json.offres || json.offres.length === 0) {
-      contenu.innerHTML = `
-        <span class="bandeau-offre">
-          Aucune offre disponible pour le moment
-        </span>
-      `;
-      return;
-    }
-
-    // Construire les offres
-    let html = '';
-    json.offres.forEach(o => {
-      const titre = escapeHtml(o.titre || 'Sans titre');
-      const entreprise = escapeHtml(o.entreprise || '');
-      const lieu = escapeHtml((o.lieu || '').split(',')[0].trim());
-
-      html += `
-        <span class="bandeau-offre">
-          🔥 <b>${titre}</b>
-          ${entreprise ? ` · ${entreprise}` : ''}
-          ${lieu ? ` · 📍 ${lieu}` : ''}
-        </span>
-        <span class="bandeau-sep">•</span>
-      `;
-    });
-
-    // Dupliquer pour un défilement infini
-    contenu.innerHTML = html + html;
-
-  } catch (e) {
-    console.error('Erreur bandeau', e);
-  }
-}
-
-// Échapper le HTML (sécurité XSS)
-function escapeHtml(s) {
-  if (!s) return '';
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-// Charger au démarrage
-document.addEventListener('DOMContentLoaded', () => {
-  chargerBandeauEmplois();
-  // Rafraîchir toutes les 5 minutes
-  setInterval(chargerBandeauEmplois, 300000);
-});
-</script>
 </body>
 </html>
